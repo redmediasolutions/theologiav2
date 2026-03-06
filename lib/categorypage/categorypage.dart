@@ -9,17 +9,19 @@ class Categorypage extends StatelessWidget {
       appBar: TertiaryAppbar(majortopic: 'Biblical Manhood'),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            ExploreAndIcon(),
-            SizedBox(height: 25),
-            CategoryTopicCard(title: 'The Role of Men in Christian Leadership', summary: 'Exploring biblical principles of godly leadership and...', readtime:'8 min read', date: 'December 5, 2024'),
-            SizedBox(height: 15),
-            CategoryTopicCard(title: 'Strength and Humility: A Biblical Balance', summary: 'Understanding how true strength is found in humility...', readtime: '6 min read', date: 'December 1, 2024'),
-            SizedBox(height: 15),
-            CategoryTopicCard(title: 'Fathers as Spiritual Leaders', summary: 'Practical insights on leading your family with wisdom and...', readtime: '10 min read', date: 'November 28, 2024')
-
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              ExploreAndIcon(),
+              SizedBox(height: 25),
+              CategoryTopicCard(title: 'The Role of Men in Christian Leadership', summary: 'Exploring biblical principles of godly leadership and...', readtime:'8 min read', date: 'December 5, 2024'),
+              SizedBox(height: 15),
+              CategoryTopicCard(title: 'Strength and Humility: A Biblical Balance', summary: 'Understanding how true strength is found in humility...', readtime: '6 min read', date: 'December 1, 2024'),
+              SizedBox(height: 15),
+              CategoryTopicCard(title: 'Fathers as Spiritual Leaders', summary: 'Practical insights on leading your family with wisdom and...', readtime: '10 min read', date: 'November 28, 2024')
+          
+            ],
+          ),
         )
 
 
