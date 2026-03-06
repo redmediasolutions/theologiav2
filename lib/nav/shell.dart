@@ -1,120 +1,142 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:theologia_app_1/main.dart';
+import 'package:theologia_app_1/widgets/mini_player.dart';
 
-class MainShell extends StatelessWidget {
+class MainShell extends StatefulWidget {
   final Widget child;
 
   const MainShell({super.key, required this.child});
+
+  @override
+  State<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends State<MainShell> {
+  bool dismissed = false;
 
   @override
   Widget build(BuildContext context) {
     final currentIndex = _getIndex(context);
 
     return Scaffold(
-      body: child,
+      body: Stack(
+  children: [
+    widget.child,
 
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
+  if (!dismissed)
+  Align(
+    alignment: Alignment.bottomCenter,
+    child: Dismissible(
+      key: const ValueKey("mini-player"),
+      direction: DismissDirection.down,
+      onDismissed: (_) async {
+        setState(() {
+          dismissed = true;
+        });
 
-        selectedItemColor: const Color(0xFFbc9a73),
-        unselectedItemColor: const Color(0xFF7f7f7f),
+        await audioHandler.stop();
+      },
+      child: MiniAudioPlayer(audioHandler: audioHandler),
+    ),
+  ),
+  ],
+),
 
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w300,
-          fontSize: 12,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 12,
-        ),
+      bottomNavigationBar: _buildBottomNav(currentIndex),
+    );
+  }
 
-        selectedIconTheme: const IconThemeData(size: 18),
-        unselectedIconTheme: const IconThemeData(size: 18),
+  Widget _buildBottomNav(int currentIndex) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
-        currentIndex: currentIndex,
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
+      backgroundColor: colors.surface,
+      showSelectedLabels: true,
+      showUnselectedLabels: true,
 
-        onTap: (index) {
-          // 🔹 Light haptic feedback (no ripple)
-          HapticFeedback.selectionClick();
+      selectedItemColor: colors.primary,
+      unselectedItemColor: colors.onSurface.withOpacity(0.6),
 
-          switch (index) {
-            case 0:
-              context.go('/category');
-              break;
-            case 1:
-              context.go('/search');
-              break;
-            case 2:
-              context.go('/');
-              break;
-            case 3:
-              context.go('/devotions');
-              break;
-            case 4:
-              context.go('/profile');
-              break;
-          }
-        },
-
-        items: [
-          BottomNavigationBarItem(
-            icon: _PressIcon(
-              icon: Icons.grid_on_outlined,
-              index: 0,
-              currentIndex: currentIndex,
-            ),
-            label: "Category",
-          ),
-          BottomNavigationBarItem(
-            icon: _PressIcon(
-              icon: Icons.category,
-              index: 1,
-              currentIndex: currentIndex,
-            ),
-            label: "Search",
-          ),
-          BottomNavigationBarItem(
-            icon: _PressIcon(
-              icon: Icons.menu_book_sharp,
-              index: 2,
-              currentIndex: currentIndex,
-            ),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: _PressIcon(
-              icon: Icons.headphones,
-              index: 3,
-              currentIndex: currentIndex,
-            ),
-            label: "Devotions",
-          ),
-          BottomNavigationBarItem(
-            icon: _PressIcon(
-              icon: Icons.person_2_outlined,
-              index: 4,
-              currentIndex: currentIndex,
-            ),
-            label: "Profile",
-          ),
-        ],
+      selectedLabelStyle: const TextStyle(
+        fontWeight: FontWeight.w400,
+        fontSize: 12,
       ),
+      unselectedLabelStyle: const TextStyle(fontSize: 12),
+
+      selectedIconTheme: const IconThemeData(size: 18),
+      unselectedIconTheme: const IconThemeData(size: 18),
+
+      currentIndex: currentIndex,
+
+      onTap: (index) {
+        HapticFeedback.selectionClick();
+
+        switch (index) {
+          case 0:
+            context.go('/');
+            break;
+          case 1:
+            context.go('/search');
+            break;
+          case 2:
+            context.go('/devotions');
+            break;
+          case 3:
+            context.go('/profile');
+            break;
+        }
+      },
+
+      items: [
+        BottomNavigationBarItem(
+          icon: _PressIcon(
+            icon: Icons.menu_book_sharp,
+            index: 0,
+            currentIndex: currentIndex,
+          ),
+          label: "Home",
+        ),
+        BottomNavigationBarItem(
+          icon: _PressIcon(
+            icon: Icons.category,
+            index: 1,
+            currentIndex: currentIndex,
+          ),
+          label: "Search",
+        ),
+        BottomNavigationBarItem(
+          icon: _PressIcon(
+            icon: Icons.self_improvement_outlined,
+            index: 2,
+            currentIndex: currentIndex,
+          ),
+          label: "Devotions",
+        ),
+        BottomNavigationBarItem(
+          icon: _PressIcon(
+            icon: Icons.person_2_outlined,
+            index: 3,
+            currentIndex: currentIndex,
+          ),
+          label: "Profile",
+        ),
+      ],
     );
   }
 
   int _getIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
 
-    if (location.startsWith('/category')) return 0;
+    if (location == '/' || location.startsWith('/home')) return 0;
     if (location.startsWith('/search')) return 1;
-    if (location == '/' || location.startsWith('/home')) return 2;
-    if (location.startsWith('/devotions')) return 3;
-    if (location.startsWith('/profile')) return 4;
+    if (location.startsWith('/devotions')) return 2;
+    if (location.startsWith('/profile')) return 3;
 
-    return 2; // fallback to Home
+    return 0;
   }
 }
 
@@ -146,3 +168,4 @@ class _PressIcon extends StatelessWidget {
     );
   }
 }
+

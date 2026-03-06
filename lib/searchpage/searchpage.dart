@@ -8,6 +8,7 @@ class SearchPage extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
  
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
@@ -73,9 +74,7 @@ class SearchPage extends StatelessWidget implements PreferredSizeWidget {
                   Column(
                     spacing: 6,
                     children: [
-                      Articles(type: 'Theology', topic: 'The Relevance of God\'s Grace in Our Life', time: '7 min read'),
-                      Articles(type: 'Decoding Pentecostalism', topic: 'Understanding the Gifts of the Spirit', time: '11 min read'),
-                      Articles(type: 'Biblical Manhood', topic: 'The Role of Men in Christian Leadership',time: '8 min read')]),
+                      ]),
           
         
             ],

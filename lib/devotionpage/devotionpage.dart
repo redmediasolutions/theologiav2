@@ -1,27 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:theologia_app_1/articlepage/articlepage.dart';
+import 'package:theologia_app_1/components/globalscaffold.dart';
+import 'package:theologia_app_1/components/recentdevotionscard.dart';
+import 'package:theologia_app_1/main.dart';
 
 class Devotionpage extends StatelessWidget {
   const Devotionpage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        leadingWidth: 70,
-        leading: Row(
-          children: [
-            Icon(Icons.arrow_back),
-            SizedBox(width: 20),
-            Icon(Icons.wb_sunny_outlined,size: 20,color: const Color.fromARGB(255, 224, 173, 126),)
-          ],
-        ),
-        title: Text('Devotion for the Day',
-                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 19)),
-        centerTitle: false,
-      ),
+    return Globalscaffold(
+
+        title: '',
       body: Padding(
         padding: const EdgeInsets.all(15.0),
         child: Column(
@@ -29,18 +18,32 @@ class Devotionpage extends StatelessWidget {
           spacing: 15,
           children: [
             SizedBox(height: 0),          
-            TodaysDevotionContainer(title: 'Endure People'),           
-            Row(
-              children: [
-                Text('Transcript',style: TextStyle(color: const Color.fromARGB(255, 117, 116, 116)),),
-                Spacer(),
-                Text('Tue, Nov 18',style: TextStyle(color: const Color.fromARGB(255, 117, 116, 116)))]),
-            Text('Endure People',
-                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 25)),
-            Text('Ephesians 4:2-3 NIV',style: TextStyle(color: const Color.fromARGB(255, 119, 118, 118),fontSize: 13),),
+            SizedBox(
+              height: 210,
+              width: double.infinity,
+              child: TodaysDevotionContainer(
+                title: "Morning Reflections",
+                subtitle: "Finding peace in the morning stillness.",
+                imageUrl: "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+                onPlay: () {},
+              ),
+            ),
             SizedBox(height: 10),
-            //Verse
-            VerseContainer2(verse: 'Be completely humble and gentle; be patient, bearing with one another in love. Make every effort to keep the unity of the Spirit through the bond of peace.'),
+            Text('RECENT DEVOTIONS',
+                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          )),
+            SizedBox(height: 10),
+            RecentDevotionCard(
+  title: "The Path of Faith",
+  subtitle: "Exploring the Journey • 12 mins",
+  date: "May 15, 2024",
+  imageUrl: "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+  onPlay: () {
+    audioHandler.play();
+  },
+),
             SizedBox(height: 5),
 
             //View all devotions container
@@ -72,39 +75,140 @@ class Devotionpage extends StatelessWidget {
 
 class TodaysDevotionContainer extends StatelessWidget {
   final String title;
-  const TodaysDevotionContainer({super.key, required this.title});
+  final String subtitle;
+  final String imageUrl;
+  final VoidCallback onPlay;
+
+  const TodaysDevotionContainer({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.imageUrl,
+    required this.onPlay,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final theme = Theme.of(context);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22),
+      child: Stack(
+        children: [
+
+          /// BACKGROUND IMAGE
+          SizedBox(
+            height: 220,
+            width: double.infinity,
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+            ),
+          ),
+
+          /// DARK GRADIENT OVERLAY
+          Container(
+            height: 220,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [const Color.fromARGB(255, 197, 17, 229),const Color.fromARGB(255, 118, 77, 239)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight
-                ),
-              borderRadius: BorderRadius.circular(20),
+                colors: [
+                  Colors.black.withOpacity(0.65),
+                  Colors.black.withOpacity(0.25),
+                ],
+                begin: Alignment.bottomLeft,
+                end: Alignment.topRight,
+              ),
             ),
-            padding: EdgeInsets.symmetric(horizontal: 30,vertical: 25),
-            height: 212,
-            width: double.infinity,
-          
+          ),
+
+          /// CONTENT
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Today\'s Devotion',style: TextStyle(color: Colors.white,fontWeight: FontWeight.w100),),
-                SizedBox(height: 18),
-                Row(
-                  children: [
-                    SizedBox(width: 4),
-                    Text(title,
-                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 32,color: Colors.white))]),
-                    SizedBox(height: 2),
-                    IconButton(onPressed: (){}, icon: Icon(Icons.play_circle,color: Colors.white,size: 65,)),
-                    
-           ] )
 
-  );
+                /// BADGE
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFb79260).withOpacity(0.85),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    "DAILY HIGHLIGHT",
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+
+                const Spacer(),
+
+                /// TITLE + PLAY BUTTON
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+
+                    /// TEXTS
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontSize: 30,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          Text(
+                            subtitle,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withOpacity(0.85),
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    /// PLAY BUTTON
+                    GestureDetector(
+                      onTap: onPlay,
+                      child: Container(
+                        height: 64,
+                        width: 64,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFFb79260),
+                        ),
+                        child: const Icon(
+                          Icons.play_arrow,
+                          color: Colors.white,
+                          size: 34,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -7,17 +7,70 @@ environment:
   sdk: ^3.10.1
 
 dependencies:
+  audio_service: ^0.18.18
+  audio_session: ^0.2.2
+  cloud_firestore: ^6.1.2
+  firebase_auth: ^6.1.4
+  firebase_core: ^4.4.0
+  firebase_messaging: ^16.1.1
   flutter:
     sdk: flutter
+  flutter_local_notifications: ^20.1.0
+  flutter_svg: ^2.2.3
   go_router: ^17.0.1
   google_fonts: ^6.3.3
+  google_sign_in: ^7.2.0
+  just_audio: ^0.10.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  change_app_package_name: ^1.1.0
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/theologia-logo.png
+  fonts:
+
+    # -------------------------
+    # Work Sans (UI Font)
+    # -------------------------
+    - family: WorkSans
+      fonts:
+        - asset: assets/fonts/worksans/WorkSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/worksans/WorkSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/worksans/WorkSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/worksans/WorkSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/worksans/WorkSans-Black.ttf
+          weight: 900
+
+    # -------------------------
+    # Lora (Serif / Devotion Font)
+    # -------------------------
+    - family: Lora
+      fonts:
+        - asset: assets/fonts/lora/Lora-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/lora/Lora-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/lora/Lora-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/lora/Lora-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/lora/Lora-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/lora/Lora-SemiBoldItalic.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/lora/Lora-BoldItalic.ttf
+          weight: 700
+          style: italic
 
 

@@ -71,12 +71,12 @@ class DevotionContainer extends StatelessWidget {
                     children: [
                       Text(epnumber,style: TextStyle(color: Colors.white,fontWeight: FontWeight.w100,fontSize: 12)),
                       Icon(Icons.circle,size:5,color: Colors.white,),
-                      Container(
+                      SizedBox(
                         width: 60,
                         height: 30,
                         child: Text(speaker,style: TextStyle(color: Colors.white,fontSize: 12))),
                       Icon(Icons.circle,size:5,color: Colors.white),
-                      Container(
+                      SizedBox(
                         width: 60,
                         child: Text(daysago,style: TextStyle(color: Colors.white,fontSize: 12)))
                ]),
@@ -143,11 +143,11 @@ class DevotionContainer2 extends StatelessWidget {
                       children: [
                         Text(epnumber,style: TextStyle(color: Colors.white,fontWeight: FontWeight.w100,fontSize: 12)),
                         Icon(Icons.circle,size:5,color: Colors.white,),
-                        Container(
+                        SizedBox(
                           width: 60,
                           child: Text(speaker,style: TextStyle(color: Colors.white,fontSize: 12))),
                         Icon(Icons.circle,size:5,color: Colors.white),
-                        Container(
+                        SizedBox(
                           width: 60,
                           child: Text(daysago,style: TextStyle(color: Colors.white,fontSize: 12)))
                  ]),

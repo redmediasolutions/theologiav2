@@ -8,6 +8,7 @@ class SearchResultsPage extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
  
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
@@ -56,7 +57,7 @@ class ArticlesWithPic extends StatelessWidget {
         padding: const EdgeInsets.all(20.0),
         child: Row(
           children: [
-            Container(
+            SizedBox(
               height: 90,
                width: 90,
                

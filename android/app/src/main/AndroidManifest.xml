@@ -3,6 +3,13 @@
         android:label="theologia_app_1"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+        <service
+    android:name="com.ryanheise.audioservice.AudioService"
+    android:exported="true"
+    android:foregroundServiceType="mediaPlayback">
+</service>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

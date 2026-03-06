@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "910435159609",
+    "project_id": "theologia-2a39d",
+    "storage_bucket": "theologia-2a39d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:910435159609:android:510f638e1de01500d607e8",
+        "android_client_info": {
+          "package_name": "com.redmediasolutions.theologiaapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "910435159609-ad1itu1m03g2ih9dnmd34l6m3va26j1q.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.redmediasolutions.theologiaapp",
+            "certificate_hash": "9bbb3186b2189ef16d8f272bdab59362c395cbb4"
+          }
+        },
+        {
+          "client_id": "910435159609-lopqkgrfded4do88q58n7ln9ajkcud1b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.redmediasolutions.theologiaapp",
+            "certificate_hash": "d5cca68f61fe027fba99df287276136b162e610f"
+          }
+        },
+        {
+          "client_id": "910435159609-719j29c4t519n57okrh2qr6ubphan66k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAb6GzM3-vgTKRDFqcCQIKSlX59FYplPI4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "910435159609-719j29c4t519n57okrh2qr6ubphan66k.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "910435159609-4k6d60vv60e6lso32v95qcrqqgl7n78h.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.redmediasolutions.theologiaapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

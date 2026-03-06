@@ -13,25 +13,25 @@ class Globalscaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFfafafa),
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-      // 🔑 Allows content to scroll behind AppBar
+    return Scaffold(
+      backgroundColor: colors.surface,
+
       extendBodyBehindAppBar: true,
 
       appBar: AppBar(
         elevation: 0,
-        scrolledUnderElevation: 0, // no solid color on scroll (Material 3 fix)
+        scrolledUnderElevation: 0,
+        backgroundColor: colors.surface.withOpacity(isDark ? 0.6 : 0.7),
 
-        // 🔑 Semi-transparent background
-        backgroundColor: Colors.white.withOpacity(0.5),
-
-        // 🔑 Blur effect
         flexibleSpace: ClipRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
             child: Container(
-              color: Colors.white.withOpacity(0.75),
+              color: colors.surface.withOpacity(isDark ? 0.6 : 0.75),
             ),
           ),
         ),
@@ -52,28 +52,52 @@ class Globalscaffold extends StatelessWidget {
                   ),
                   fit: BoxFit.cover,
                 ),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
-                    color: Color(0xFFE0E0E0),
-                    blurRadius: 2,
+                    color: colors.shadow.withOpacity(0.2),
+                    blurRadius: 4,
                     spreadRadius: 1,
                   )
                 ],
               ),
             ),
+
             const SizedBox(width: 10),
+
             Text(
               title,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w400,
-                    fontSize: 20,
-                  ),
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 24,
+              ),
             ),
           ],
         ),
+
+        actionsPadding: const EdgeInsets.only(right: 16),
+
+        actions: [
+          IconButton(
+            onPressed: () {},
+            color: colors.onSurface.withOpacity(0.8),
+            icon: const Icon(Icons.notifications_none),
+          ),
+
+          Container(
+            width: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colors.surfaceContainerHighest,
+            ),
+            child: IconButton(
+              onPressed: () {},
+              color: colors.primary,
+              icon: const Icon(Icons.account_circle_outlined),
+            ),
+          ),
+        ],
       ),
 
-      // 🔑 Add top padding so content doesn’t hide under AppBar
       body: Padding(
         padding: EdgeInsets.only(
           top: MediaQuery.of(context).padding.top + kToolbarHeight,
