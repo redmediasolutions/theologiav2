@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:theologia_app_1/services/updateservice.dart';
 
 class UpdateChecker extends StatefulWidget {
@@ -11,7 +14,6 @@ class UpdateChecker extends StatefulWidget {
 }
 
 class _UpdateCheckerState extends State<UpdateChecker> {
-
   bool showSoftUpdate = false;
 
   @override
@@ -21,7 +23,6 @@ class _UpdateCheckerState extends State<UpdateChecker> {
   }
 
   Future<void> _check() async {
-
     final status = await UpdateService.checkForUpdate();
 
     if (!mounted) return;
@@ -37,8 +38,26 @@ class _UpdateCheckerState extends State<UpdateChecker> {
     }
   }
 
-  void _showForceUpdate() {
+  /// 🔹 OPEN STORE FROM REMOTE CONFIG
+  Future<void> _openStore() async {
+    final remoteConfig = FirebaseRemoteConfig.instance;
 
+    final androidUrl = remoteConfig.getString('android_store_url');
+    final iosUrl = remoteConfig.getString('ios_store_url');
+
+    final url = Platform.isIOS ? iosUrl : androidUrl;
+
+    if (url.isEmpty) return;
+
+    final uri = Uri.parse(url);
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  /// 🔹 FORCE UPDATE (NON-DISMISSABLE)
+  void _showForceUpdate() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -49,9 +68,7 @@ class _UpdateCheckerState extends State<UpdateChecker> {
         ),
         actions: [
           ElevatedButton(
-            onPressed: () {
-              // open store
-            },
+            onPressed: _openStore,
             child: const Text("Update"),
           )
         ],
@@ -61,21 +78,18 @@ class _UpdateCheckerState extends State<UpdateChecker> {
 
   @override
   Widget build(BuildContext context) {
-
     return Column(
       children: [
-
-        /// SOFT UPDATE BANNER
+        /// 🔹 SOFT UPDATE BANNER
         if (showSoftUpdate)
           Container(
             width: double.infinity,
-            color: Colors.amber.shade800,
+            color: Colors.amber.shade900,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: SafeArea(
               bottom: false,
               child: Row(
                 children: [
-
                   const Icon(Icons.system_update, color: Colors.white),
 
                   const SizedBox(width: 10),
@@ -83,14 +97,15 @@ class _UpdateCheckerState extends State<UpdateChecker> {
                   const Expanded(
                     child: Text(
                       "A new version of Theologia is available.",
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600
+                        ),
                     ),
                   ),
 
                   TextButton(
-                    onPressed: () {
-                      // open store
-                    },
+                    onPressed: _openStore,
                     child: const Text(
                       "UPDATE",
                       style: TextStyle(color: Colors.white),
@@ -104,12 +119,13 @@ class _UpdateCheckerState extends State<UpdateChecker> {
                       });
                     },
                     icon: const Icon(Icons.close, color: Colors.white),
-                  )
+                  ),
                 ],
               ),
             ),
           ),
 
+        /// 🔹 MAIN APP CONTENT
         Expanded(child: widget.child),
       ],
     );
