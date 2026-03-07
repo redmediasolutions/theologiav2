@@ -31,7 +31,8 @@ class ProfilePage extends StatelessWidget {
                 ),
 
               const SizedBox(height: 40),
-
+              const Text('Stay tuned — more features are on the way.'),
+              const SizedBox(height: 40),
               // 🔴 Logout Button
               SizedBox(
                 width: double.infinity,

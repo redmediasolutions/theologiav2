@@ -47,7 +47,7 @@ class Globalscaffold extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 image: const DecorationImage(
-  image: AssetImage('assets/app_launcher_icon.png'),
+  image: AssetImage('assets/theologia-logo.png'),
   fit: BoxFit.cover,
 ),
                 boxShadow: [
