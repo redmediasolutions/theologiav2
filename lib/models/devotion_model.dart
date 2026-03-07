@@ -14,6 +14,7 @@ class DevotionModel {
   final String? episodeCoverUrl;
   final String? episodeDesc; // Optional field for speaker's name
 
+
   DevotionModel({
     required this.id,
     required this.episodeDate,

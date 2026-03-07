@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:theologia_app_1/main.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:theologia_app_1/services/audio_analytics_service.dart';
+import 'package:go_router/go_router.dart';
 
 class RecentDevotions extends StatelessWidget {
   final String id;
@@ -26,11 +29,23 @@ class RecentDevotions extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
+    final user = FirebaseAuth.instance.currentUser;
+    final bool isAuthenticated = user != null && !user.isAnonymous;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () {
+          if (!isAuthenticated) {
+            context.push('/login');
+            return;
+          }
+
+          /// Analytics
+          AudioAnalyticsService.incrementAudioOpened(id);
+
+          /// Play audio
           audioHandler.playMedia(
             id: id,
             title: title,
@@ -48,7 +63,7 @@ class RecentDevotions extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              /// TOP IMAGE
+              /// IMAGE
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(20),
@@ -99,28 +114,56 @@ class RecentDevotions extends StatelessWidget {
                     ),
 
                     const SizedBox(height: 16),
-                    
-                    /// BOTTOM ROW
+
+                    /// PLAY BUTTON ROW
                     Row(
                       children: [
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            if (!isAuthenticated) {
+                              context.push('/login');
+                              return;
+                            }
+                             miniPlayerDismissed.value = false;
+                            /// Analytics
+                            AudioAnalyticsService.incrementAudioOpened(id);
 
-                        /// READ TIME
-                        Text(
-                          "4 min read",
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontSize: 15,
-                            fontStyle: FontStyle.italic,
-                            color: colors.onSurface.withOpacity(0.7),
+                            /// Play audio
+                            audioHandler.playMedia(
+                              id: id,
+                              title: title,
+                              url: audioUrl,
+                              imageUrl: coverUrl,
+                            );
+                          },
+                          icon: Icon(
+                            isAuthenticated
+                                ? Icons.play_arrow
+                                : Icons.lock,
+                          ),
+                          label: Text(
+                            isAuthenticated
+                                ? "Play Now"
+                                : "Login to Play",
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isAuthenticated
+                                ? colors.primary
+                                : Colors.grey.shade600,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            ),
                           ),
                         ),
 
-                        const Spacer(),
+                        const SizedBox(width: 12),
 
-                        /// BOOKMARK
-                        Icon(
-                          Icons.bookmark_border,
-                          color: colors.onSurface.withOpacity(0.6),
-                        ),
+
                       ],
                     ),
                   ],

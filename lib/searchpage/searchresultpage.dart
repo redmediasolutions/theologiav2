@@ -1,101 +1,174 @@
 import 'package:flutter/material.dart';
 import 'package:theologia_app_1/articlepage/articlepage.dart';
+import 'package:theologia_app_1/services/firestore.dart';
+import 'package:theologia_app_1/models/articlemodels.dart';
+import 'package:theologia_app_1/components/categorytopiccard.dart';
 
-class SearchResultsPage extends StatelessWidget implements PreferredSizeWidget {
-  const SearchResultsPage({super.key});
+class SearchResultsPage extends StatefulWidget {
+  final String query;
 
-  
+  const SearchResultsPage({super.key, required this.query});
+
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
- 
+  State<SearchResultsPage> createState() => _SearchResultsPageState();
+}
+
+class _SearchResultsPageState extends State<SearchResultsPage> {
+
+  final FirestoreService firestore = FirestoreService();
+  final TextEditingController _controller = TextEditingController();
+
+  late Future<List<ArticleModel>> results;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller.text = widget.query;
+
+    results = firestore.searchArticles(widget.query);
+  }
+
+  void _performSearch(String query) {
+    if (query.trim().isEmpty) return;
+
+    setState(() {
+      results = firestore.searchArticles(query);
+    });
+  }
+
+  String _formatDate(DateTime date) {
+    return "${date.day}/${date.month}/${date.year}";
+  }
+
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: SingleChildScrollView(
-            child: 
-          Column(
+          padding: const EdgeInsets.all(15),
+
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
+              /// SEARCH BAR
               SearchBar(
-                       leading: Icon(Icons.search,color: Colors.grey,),
-                       elevation: WidgetStatePropertyAll(0),
-                       hintText: 'Search articles, topics, categories...',
-                       backgroundColor: WidgetStatePropertyAll(Colors.white),
-                       shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(15))),),
-              SizedBox(height: 10),
-              Divider(),
-              SizedBox(height: 20), 
-              Text('1 result found',
-                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 15,fontWeight: FontWeight.w500)),
-              //Articles
-              ArticlesWithPic(type: 'Theology', topic: 'The Relevance of God\'s Grace in Our Life', time: '7min read'    )   
-              
-        
+                controller: _controller,
+                leading: const Icon(Icons.search,color: Colors.grey),
+                hintText: "Search articles, topics, categories...",
+                elevation: const WidgetStatePropertyAll(0),
+                backgroundColor: const WidgetStatePropertyAll(Colors.white),
+                shape: WidgetStatePropertyAll(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+                onSubmitted: _performSearch,
+              ),
+
+              const SizedBox(height: 10),
+              const Divider(),
+              const SizedBox(height: 20),
+
+              /// RESULTS
+              Expanded(
+                child: FutureBuilder<List<ArticleModel>>(
+
+                  future: results,
+
+                  builder: (context, snapshot) {
+
+                    /// LOADING
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+
+                    /// ERROR
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text("Error: ${snapshot.error}"),
+                      );
+                    }
+
+                    final articles = snapshot.data ?? [];
+
+                    /// EMPTY
+                    if (articles.isEmpty) {
+                      return const Center(
+                        child: Text("No results found"),
+                      );
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
+                        /// RESULT COUNT
+                        Text(
+                          "${articles.length} result${articles.length == 1 ? '' : 's'} found",
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        /// RESULTS LIST
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: articles.length,
+                            itemBuilder: (context, index) {
+
+                              final article = articles[index];
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 20),
+
+                                child: GestureDetector(
+                                  onTap: () {
+
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            ArticlePage(articleId: article.id),
+                                      ),
+                                    );
+
+                                  },
+
+                                  child: CategoryTopicCard(
+                                    title: article.title,
+                                    summary: article.excerpt,
+                                    readtime: "5 min read",
+                                    date: _formatDate(article.createdAt),
+                                    category: "Article",
+                                    imageUrl: article.featuredImage ?? "",
+                                    views: "0", 
+                                    articleId: article.id,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
             ],
-          )),
+          ),
         ),
-      )
-      
-    );
-  }
-}
-
-
-class ArticlesWithPic extends StatelessWidget {
-  final String type;
-  final String topic;
-  final String time;
-  const ArticlesWithPic({super.key, required this.type, required this.topic, required this.time});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Row(
-          children: [
-            SizedBox(
-              height: 90,
-               width: 90,
-               
-              child: 
-               ClipRRect(
-                borderRadius: BorderRadius.circular(50) ,
-                child: Image.network('https://images.unsplash.com/photo-1509021436665-8f07dbf5bf1d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8YmlibGV8ZW58MHx8MHx8fDA%3D'),
-               ) ),
-               SizedBox(width: 15),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(type,
-                 style: TextStyle(
-                  fontSize: 12,
-                  color: const Color.fromARGB(255, 177, 141, 128)
-                 ),),
-                 SizedBox(height: 10),
-                Text(topic,
-                           style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 16,fontWeight: FontWeight.w600)),
-                SizedBox(height: 10),
-                Row(
-                  children: [
-                    Icon(Icons.access_time,size: 15,),
-                    SizedBox(width: 8),
-                    Text(time,
-                     style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey
-                     ),),
-                  ],
-                ),        
-              ]
-              
-            ),
-          ],
-        ),
-      )
+      ),
     );
   }
 }

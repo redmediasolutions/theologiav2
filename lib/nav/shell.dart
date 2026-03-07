@@ -1,3 +1,4 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -14,7 +15,7 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  bool dismissed = false;
+  String? lastMediaId;
 
   @override
   Widget build(BuildContext context) {
@@ -25,22 +26,34 @@ class _MainShellState extends State<MainShell> {
   children: [
     widget.child,
 
-  if (!dismissed)
-  Align(
-    alignment: Alignment.bottomCenter,
-    child: Dismissible(
-      key: const ValueKey("mini-player"),
-      direction: DismissDirection.down,
-      onDismissed: (_) async {
-        setState(() {
-          dismissed = true;
-        });
+  ValueListenableBuilder<bool>(
+  valueListenable: miniPlayerDismissed,
+  builder: (context, dismissed, _) {
+    return StreamBuilder<MediaItem?>(
+      stream: audioHandler.mediaItem,
+      builder: (context, snapshot) {
+        final media = snapshot.data;
 
-        await audioHandler.stop();
+        if (media == null || dismissed) {
+          return const SizedBox();
+        }
+
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: Dismissible(
+            key: ValueKey(media.id),
+            direction: DismissDirection.down,
+            onDismissed: (_) async {
+              miniPlayerDismissed.value = true;
+              await audioHandler.stop();
+            },
+            child: MiniAudioPlayer(audioHandler: audioHandler),
+          ),
+        );
       },
-      child: MiniAudioPlayer(audioHandler: audioHandler),
-    ),
-  ),
+    );
+  },
+)
   ],
 ),
 
@@ -83,9 +96,12 @@ class _MainShellState extends State<MainShell> {
             context.go('/search');
             break;
           case 2:
-            context.go('/devotions');
+            context.go('/foryoupage');
             break;
           case 3:
+            context.go('/devotions');
+            break;
+          case 4:
             context.go('/profile');
             break;
         }
@@ -102,16 +118,24 @@ class _MainShellState extends State<MainShell> {
         ),
         BottomNavigationBarItem(
           icon: _PressIcon(
-            icon: Icons.category,
+            icon: Icons.search,
             index: 1,
             currentIndex: currentIndex,
           ),
           label: "Search",
         ),
+         BottomNavigationBarItem(
+          icon: _PressIcon(
+            icon: Icons.recent_actors,
+            index: 2,
+            currentIndex: currentIndex,
+          ),
+          label: "For You",
+        ),
         BottomNavigationBarItem(
           icon: _PressIcon(
             icon: Icons.self_improvement_outlined,
-            index: 2,
+            index: 3,
             currentIndex: currentIndex,
           ),
           label: "Devotions",
@@ -119,7 +143,7 @@ class _MainShellState extends State<MainShell> {
         BottomNavigationBarItem(
           icon: _PressIcon(
             icon: Icons.person_2_outlined,
-            index: 3,
+            index: 4,
             currentIndex: currentIndex,
           ),
           label: "Profile",
@@ -133,8 +157,9 @@ class _MainShellState extends State<MainShell> {
 
     if (location == '/' || location.startsWith('/home')) return 0;
     if (location.startsWith('/search')) return 1;
-    if (location.startsWith('/devotions')) return 2;
-    if (location.startsWith('/profile')) return 3;
+    if (location.startsWith('/foryoupage')) return 2;
+    if (location.startsWith('/devotions')) return 3;
+    if (location.startsWith('/profile')) return 4;
 
     return 0;
   }

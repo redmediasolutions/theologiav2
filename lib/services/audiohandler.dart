@@ -2,11 +2,14 @@ import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:theologia_app_1/services/audio_analytics_service.dart';
 
 class TheologiaAudioHandler extends BaseAudioHandler
     with QueueHandler, SeekHandler {
 
   final AudioPlayer _player = AudioPlayer();
+  String? _currentAudioId;
+  bool _completionTracked = false;
 
   TheologiaAudioHandler() {
     _init();
@@ -28,6 +31,20 @@ class TheologiaAudioHandler extends BaseAudioHandler
         );
       }
     });
+
+    _player.positionStream.listen((position) {
+  final duration = _player.duration;
+
+  if (duration != null &&
+      position.inSeconds >= duration.inSeconds * 0.9 &&
+      !_completionTracked &&
+      _currentAudioId != null) {
+
+    _completionTracked = true;
+
+    AudioAnalyticsService.incrementAudioCompleted(_currentAudioId!);
+  }
+});
   }
 
   /// 🔥 PLAY MEDIA
@@ -37,7 +54,8 @@ class TheologiaAudioHandler extends BaseAudioHandler
   required String url,
   String? imageUrl,
 }) async {
-
+  _currentAudioId = id;
+_completionTracked = false;
   await _player.setUrl(url);
 
   /// 🔥 Fallback logic

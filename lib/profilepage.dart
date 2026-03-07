@@ -41,7 +41,7 @@ class ProfilePage extends StatelessWidget {
 
                     // Redirect to login
                     if (context.mounted) {
-                      context.go('/login');
+                      context.go('/');
                     }
                   },
                   style: ElevatedButton.styleFrom(

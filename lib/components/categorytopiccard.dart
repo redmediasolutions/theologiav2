@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class CategoryTopicCard extends StatelessWidget {
+  final String articleId;
   final String title;
   final String summary;
   final String readtime;
@@ -11,6 +13,7 @@ class CategoryTopicCard extends StatelessWidget {
 
   const CategoryTopicCard({
     super.key,
+    required this.articleId,
     required this.title,
     required this.summary,
     required this.readtime,
@@ -22,119 +25,134 @@ class CategoryTopicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return Card(
       elevation: 1.5,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(22),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      clipBehavior: Clip.antiAlias, // important for ripple clipping
 
-            /// Top Image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: Image.network(
-                imageUrl,
-                height: 170,
-                width: double.infinity,
-                fit: BoxFit.cover,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+
+        onTap: () {
+          context.pushNamed(
+            'article',
+            pathParameters: {
+              'id': articleId,
+            },
+          );
+        },
+
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+
+              /// Image with ripple
+              ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: Ink.image(
+                  image: NetworkImage(imageUrl),
+                  height: 170,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            /// Category + Date
-            Row(
-              children: [
-                Text(
-                  category.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFB08968),
-                    letterSpacing: 0.8,
+              /// Category + Date
+              Row(
+                children: [
+                  Text(
+                    category.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFB08968),
+                      letterSpacing: 0.8,
+                    ),
                   ),
-                ),
 
-                const SizedBox(width: 10),
+                  const SizedBox(width: 10),
+                  const Icon(Icons.circle, size: 4, color: Colors.grey),
+                  const SizedBox(width: 10),
 
-                const Icon(Icons.circle, size: 4, color: Colors.grey),
-
-                const SizedBox(width: 10),
-
-                Text(
-                  date,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey,
+                  Text(
+                    date,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey,
+                    ),
                   ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            /// Title
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                  ),
-            ),
-
-            const SizedBox(height: 10),
-
-            /// Summary
-            Text(
-              summary,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 15,
-                height: 1.6,
-                color: Colors.black54,
+                ],
               ),
-            ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 10),
 
-            /// Bottom Meta Row
-            Row(
-              children: [
-                const Icon(Icons.access_time, size: 18, color: Colors.grey),
+              /// Title
+              Text(
+                title,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                    ),
+              ),
 
-                const SizedBox(width: 6),
+              const SizedBox(height: 10),
 
-                Text(
-                  readtime,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 13,
-                  ),
+              /// Summary
+              Text(
+                summary,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  height: 1.6,
+                  color: Colors.black54,
                 ),
+              ),
 
-                const SizedBox(width: 18),
+              const SizedBox(height: 16),
 
-                const Icon(Icons.visibility_outlined,
-                    size: 18, color: Colors.grey),
+              /// Bottom Meta Row
+              Row(
+                children: [
+                  const Icon(Icons.access_time, size: 18, color: Colors.grey),
 
-                const SizedBox(width: 6),
+                  const SizedBox(width: 6),
 
-                Text(
-                  views,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 13,
+                  Text(
+                    readtime,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 13,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+
+                  const SizedBox(width: 18),
+
+                  const Icon(Icons.visibility_outlined,
+                      size: 18, color: Colors.grey),
+
+                  const SizedBox(width: 6),
+
+                  Text(
+                    views,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

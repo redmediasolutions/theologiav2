@@ -5,8 +5,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 // Import your pages
 import 'package:theologia_app_1/articlepage/articlepage.dart';
+import 'package:theologia_app_1/auth/createaccount.dart';
+import 'package:theologia_app_1/auth/forgotpassword.dart';
 import 'package:theologia_app_1/categorypage/collectiondetailpage.dart';
 import 'package:theologia_app_1/devotionpage/devotionpage.dart';
+import 'package:theologia_app_1/foryoupage/foryoupage.dart';
 import 'package:theologia_app_1/home/home.dart';
 import 'package:theologia_app_1/nav/shell.dart';
 import 'package:theologia_app_1/profilepage.dart';
@@ -57,6 +60,17 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const LoginScreen(),
     ),
 
+     GoRoute(
+      path: '/create-account',
+      builder: (context, state) => const CreateAccountScreen(),
+    ),
+
+    GoRoute(
+      path: '/forgot-password',
+      builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+
+
     // --- Article Page (Outside the Shell) ---
     // Updated to accept an ID parameter
     GoRoute(
@@ -105,6 +119,13 @@ final GoRouter appRouter = GoRouter(
           name: 'search',
           builder: (BuildContext context, GoRouterState state) {
             return const SearchPage();
+          },
+        ),
+        GoRoute(
+          path: '/foryoupage',
+          name: 'foryoupage',
+          builder: (BuildContext context, GoRouterState state) {
+            return const ForYouPage();
           },
         ),
         GoRoute(

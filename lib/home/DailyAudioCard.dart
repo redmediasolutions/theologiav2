@@ -5,16 +5,14 @@ import 'package:theologia_app_1/apptheme.dart';
 import 'package:theologia_app_1/auth/login.dart';
 import 'package:theologia_app_1/main.dart';
 import 'package:theologia_app_1/models/devotion_model.dart';
+import 'package:theologia_app_1/services/audio_analytics_service.dart';
 import 'package:theologia_app_1/services/audiohandler.dart';
 import 'package:theologia_app_1/services/firestore.dart';
 
 class DailyAudioCard extends StatelessWidget {
   final FirestoreService devotionService;
 
-  const DailyAudioCard({
-    super.key,
-    required this.devotionService,
-  });
+  const DailyAudioCard({super.key, required this.devotionService});
 
   @override
   Widget build(BuildContext context) {
@@ -55,41 +53,37 @@ class DailyAudioCard extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [AppTheme.bgDark, colorScheme.surface]
-                        : [AppTheme.bgLight, Color( 0xFFf5f2e8)],
-                  ),
-                  border: Border.all(
-                    color: colorScheme.outline, 
-                    width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+                      colors: isDark
+                          ? [AppTheme.bgDark, colorScheme.surface]
+                          : [AppTheme.bgLight, Color(0xFFf5f2e8)],
                     ),
-                  ],
+                    border: Border.all(color: colorScheme.outline, width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: isWide
+                        ? Row(
+                            children: [
+                              _buildImage(devotion.episodeCoverUrl),
+                              Expanded(child: _buildContent(context, devotion)),
+                            ],
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildImage(devotion.episodeCoverUrl),
+                              _buildContent(context, devotion),
+                            ],
+                          ),
+                  ),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: isWide
-                      ? Row(
-                          children: [
-                            _buildImage(devotion.episodeCoverUrl),
-                            Expanded(
-                                child: _buildContent(context, devotion)),
-                          ],
-                        )
-                      : Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.stretch,
-                          children: [
-                            _buildImage(devotion.episodeCoverUrl),
-                            _buildContent(context, devotion),
-                          ],
-                        ),
-                ),
-                )
               );
             },
           ),
@@ -116,8 +110,7 @@ class DailyAudioCard extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(
-      BuildContext context, DevotionModel devotion) {
+  Widget _buildContent(BuildContext context, DevotionModel devotion) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -139,67 +132,76 @@ class DailyAudioCard extends StatelessWidget {
           Text(
             devotion.episodeName ?? "Untitled Devotion",
             style: theme.textTheme.headlineLarge?.copyWith(
-              color: theme.textTheme.headlineMedium?.color
-                  ?.withOpacity(0.9),
+              color: theme.textTheme.headlineMedium?.color?.withOpacity(0.9),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             devotion.episodeDesc ?? "",
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.textTheme.bodyMedium?.color
-                  ?.withOpacity(0.7),
+              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
             ),
           ),
           const SizedBox(height: 24),
           Row(
-            children: [
-              ElevatedButton.icon(
-                onPressed: () {
+  children: [
+    StreamBuilder<User?>(
+  stream: FirebaseAuth.instance.authStateChanges(),
+  builder: (context, snapshot) {
+    final user = snapshot.data;
+    final isAnonymous = user == null || user.isAnonymous;
 
-  final user = FirebaseAuth.instance.currentUser;
+    return Row(
+      children: [
+        ElevatedButton.icon(
+          onPressed: () {
+            if (isAnonymous) {
+              context.push('/login');
+              return;
+            }
 
-  if (user == null) {
+            miniPlayerDismissed.value = false;
 
-    context.push('/login');
-    return;
+            AudioAnalyticsService.incrementAudioOpened(devotion.id);
 
-
-    return;
-  }
-
-  audioHandler.playMedia(
-    id: devotion.id,
-    title: devotion.episodeName ?? "",
-    url: devotion.episodeUrl ?? "",
-    imageUrl: devotion.episodeCoverUrl ?? "",
-  );
-
-},
-                icon: const Icon(Icons.play_arrow),
-                label: const Text("Play Now"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Text(
-                devotion.episodeduration ?? "",
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.textTheme.bodyMedium?.color
-                      ?.withOpacity(0.6),
-                ),
-              ),
-            ],
+            audioHandler.playMedia(
+              id: devotion.id,
+              title: devotion.episodeName ?? "",
+              url: devotion.episodeUrl ?? "",
+              imageUrl: devotion.episodeCoverUrl ?? "",
+            );
+          },
+          icon: Icon(isAnonymous ? Icons.lock : Icons.play_arrow),
+          label: Text(isAnonymous ? "Login to Play" : "Play Now"),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isAnonymous
+                ? Colors.grey.shade600
+                : colorScheme.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 28,
+              vertical: 14,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(50),
+            ),
           ),
+        ),
+
+        const SizedBox(width: 16),
+
+        Text(
+          devotion.episodeduration ?? "",
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+          ),
+        ),
+      ],
+    );
+  },
+),
+  ],
+)
         ],
       ),
     );

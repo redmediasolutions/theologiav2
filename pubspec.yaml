@@ -13,6 +13,7 @@ dependencies:
   firebase_auth: ^6.1.4
   firebase_core: ^4.4.0
   firebase_messaging: ^16.1.1
+  firebase_remote_config: ^6.2.0
   flutter:
     sdk: flutter
   flutter_local_notifications: ^20.1.0
@@ -20,7 +21,19 @@ dependencies:
   go_router: ^17.0.1
   google_fonts: ^6.3.3
   google_sign_in: ^7.2.0
+  intl: ^0.20.2
   just_audio: ^0.10.5
+  package_info_plus: ^9.0.0
+  sign_in_with_apple: ^7.0.1
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/app_launcher_icon.png"
+
+  adaptive_icon_foreground: "assets/App_Icon_Android_Foreground.png"
+  adaptive_icon_background: "#b69260"
 
 dev_dependencies:
   flutter_test:

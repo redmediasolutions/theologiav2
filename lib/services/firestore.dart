@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:theologia_app_1/models/article_question_model.dart';
 import 'package:theologia_app_1/models/articlemodels.dart';
 import 'package:theologia_app_1/models/collection_model.dart';
 import 'package:theologia_app_1/models/collectionarticleview.dart';
@@ -303,5 +304,90 @@ Stream<DevotionModel?> streamTodayDevotion() {
               as DocumentSnapshot<Map<String, dynamic>>,
         );
       });
+}
+
+// =========================================================
+// 🔹 ALL PUBLISHED ARTICLES (FOR YOU PAGE)
+// =========================================================
+
+// =========================================================
+// 🔹 PAGINATED PUBLISHED ARTICLES
+// =========================================================
+
+Stream<List<ArticleModel>> streamPublishedArticles({
+  DocumentSnapshot? lastDocument,
+  int limit = 10,
+}) {
+  Query query = _db
+      .collection('Articles')
+      .where('isPublished', isEqualTo: true)
+      //.orderBy('created_at', descending: true)
+      .limit(limit);
+
+  if (lastDocument != null) {
+    query = query.startAfterDocument(lastDocument);
+  }
+
+  return query.snapshots().handleError((error) {
+    print('Error fetching published articles: $error');
+  }).map(_mapArticleList);
+}
+
+
+// =========================================================
+// 🔹 SEARCH FUNCTIONALITY
+// =========================================================
+
+Future<List<ArticleModel>> searchArticles(String query) async {
+
+  final q = query.toLowerCase();
+
+  /// First try tag search (fast)
+  final tagSnapshot = await _db
+      .collection('Articles')
+      .where('isPublished', isEqualTo: true)
+      .where('tags', arrayContains: q)
+      .get();
+
+  final tagResults = _mapArticleList(tagSnapshot);
+
+  /// Also fetch all published articles (for title/excerpt match)
+  final snapshot = await _db
+      .collection('Articles')
+      .where('isPublished', isEqualTo: true)
+      .get();
+
+  final allArticles = _mapArticleList(snapshot);
+
+  final textMatches = allArticles.where((article) {
+
+    final title = article.title.toLowerCase();
+    final excerpt = article.excerpt.toLowerCase();
+
+    return title.contains(q) || excerpt.contains(q);
+
+  }).toList();
+
+  /// Combine results without duplicates
+  final combined = {
+    for (var article in [...tagResults, ...textMatches]) article.id: article
+  }.values.toList();
+
+  return combined;
+}
+
+// Stream answered questions
+Stream<List<ArticleQuestionModel>> streamArticleQuestions(String articleId) {
+  return _db
+      .collection('Articles')
+      .doc(articleId)
+      .collection('questions')
+      .where('answered', isEqualTo: true)
+      //.orderBy('createdAt', descending: true)
+      .snapshots()
+      .map((snapshot) => snapshot.docs
+          .map((doc) => ArticleQuestionModel.fromFirestore(
+              doc as DocumentSnapshot<Map<String, dynamic>>))
+          .toList());
 }
 }

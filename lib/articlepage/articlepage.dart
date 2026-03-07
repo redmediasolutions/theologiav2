@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:theologia_app_1/articlepage/article_repository.dart';
 import 'package:theologia_app_1/articlepage/articleview.dart';
 import 'package:theologia_app_1/models/singlearticlemodel.dart';
+// ANALYTICS
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ArticlePage extends StatefulWidget {
   final String articleId;
@@ -22,6 +24,7 @@ class _ArticlePageState extends State<ArticlePage> {
   @override
   void initState() {
     super.initState();
+      incrementArticleOpened();   // analytics
     _loadArticle();
   }
 
@@ -30,6 +33,19 @@ class _ArticlePageState extends State<ArticlePage> {
       FirebaseFirestore.instance,
     ).fetchArticle(widget.articleId);
   }
+
+  Future<void> incrementArticleOpened() async {
+  try {
+    await FirebaseFirestore.instance
+        .collection('Articles')
+        .doc(widget.articleId)
+        .update({
+      'analytics.openedCount': FieldValue.increment(1),
+    });
+  } catch (e) {
+    debugPrint("Analytics error: $e");
+  }
+}
 
   @override
   Widget build(BuildContext context) {

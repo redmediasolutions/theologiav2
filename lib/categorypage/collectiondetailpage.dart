@@ -72,25 +72,16 @@ class CollectionDetailPage extends StatelessWidget {
                       
                       final article = articles[index];
                       
-                      return GestureDetector(
-                       onTap: () {
-  context.pushNamed(
-    'article',
-    pathParameters: {
-      'id': article.articleId,
-    },
-  );
-},
-                        child: CategoryTopicCard(
-                          title: article.title,
-                          summary: article.summary,
-                          readtime: '3 Minutes',
-                          date: '10/10/2023',
-                          category: 'Theology',
-                          imageUrl:
-                              'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800',
-                          views: '1.2K',
-                        ),
+                      return CategoryTopicCard(
+                        title: article.title,
+                        summary: article.summary,
+                        readtime: '3 Minutes',
+                        date: '10/10/2023',
+                        category: 'Theology',
+                        imageUrl:
+                            'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800',
+                        views: '1.2K', 
+                        articleId: article.articleId,
                       );
                     },
                   );
