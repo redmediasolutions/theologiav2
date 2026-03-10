@@ -94,21 +94,3 @@ class _MainAppState extends State<MainApp> {
     );
   }
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: ThemeController.themeMode,
-      builder: (context, mode, _) {
-        return MaterialApp.router(
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          debugShowCheckedModeBanner: false,
-          themeMode: mode,
-          routerConfig: appRouter,
-        );
-      },
-    );
-  }
-
-
