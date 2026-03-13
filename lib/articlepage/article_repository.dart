@@ -7,21 +7,47 @@ class ArticleRepository {
   ArticleRepository(this._db);
 
   Future<Singlearticlemodel?> fetchArticle(String articleId) async {
-  final doc = await _db
-      .collection('Articles')
-      .doc(articleId)
-      .get();
 
-  if (!doc.exists) return null;
+    print("📡 ArticleRepository.fetchArticle START");
+    print("📡 Fetching articleId: $articleId");
 
-  final data = doc.data();
+    try {
 
-  if (data == null) return null;
+      final doc = await _db
+          .collection('Articles')
+          .doc(articleId)
+          .get();
 
-  if (data['isPublished'] != true) return null;
+      print("📡 Firestore GET completed");
 
-  return Singlearticlemodel.fromFirestore(
-    doc,
-  );
-}
+      if (!doc.exists) {
+        print("❌ Article doc does not exist");
+        return null;
+      }
+
+      final data = doc.data();
+
+      if (data == null) {
+        print("❌ Article data is null");
+        return null;
+      }
+
+      if (data['isPublished'] != true) {
+        print("❌ Article not published");
+        return null;
+      }
+
+      print("✅ Article parsed successfully");
+
+      return Singlearticlemodel.fromFirestore(doc);
+
+    } catch (e, stack) {
+
+      print("🔥 ERROR inside fetchArticle");
+      print(e);
+      print(stack);
+
+      return null;
+    }
+  }
 }

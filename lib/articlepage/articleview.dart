@@ -10,7 +10,11 @@ class ArticleView extends StatefulWidget {
   final Singlearticlemodel article;
   final String heroTag;
 
-  const ArticleView({super.key, required this.article, required this.heroTag});
+  const ArticleView({
+    super.key,
+    required this.article,
+    required this.heroTag,
+  });
 
   @override
   State<ArticleView> createState() => _ArticleViewState();
@@ -23,18 +27,22 @@ class _ArticleViewState extends State<ArticleView> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_scrollListener);
+  }
 
-    /// Detect when user reaches end of article
-    _scrollController.addListener(() {
-      if (_scrollController.position.pixels > 0 &&
-          _scrollController.position.extentAfter < 200) {
-        if (!completedTracked) {
-          completedTracked = true;
-          debugPrint("Article completion triggered");
-          incrementArticleCompleted();
-        }
+  /// Detect when article is fully read
+  void _scrollListener() {
+    if (!_scrollController.hasClients) return;
+
+    final position = _scrollController.position;
+
+    if (position.pixels > 0 && position.extentAfter < 200) {
+      if (!completedTracked) {
+        completedTracked = true;
+        debugPrint("Article completion triggered");
+        incrementArticleCompleted();
       }
-    });
+    }
   }
 
   Future<void> incrementArticleCompleted() async {
@@ -42,7 +50,9 @@ class _ArticleViewState extends State<ArticleView> {
       await FirebaseFirestore.instance
           .collection('Articles')
           .doc(widget.article.id)
-          .update({'analytics.completedCount': FieldValue.increment(1)});
+          .update({
+        'analytics.completedCount': FieldValue.increment(1),
+      });
     } catch (e) {
       debugPrint("Completion analytics error: $e");
     }
@@ -50,6 +60,7 @@ class _ArticleViewState extends State<ArticleView> {
 
   @override
   void dispose() {
+    _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     super.dispose();
   }
@@ -70,11 +81,12 @@ class _ArticleViewState extends State<ArticleView> {
             delegate: SliverChildListDelegate([
               const SizedBox(height: 20),
 
-              /// 🔥 Entire article selectable
+              /// Entire article selectable
               SelectionArea(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+
                     /// Title
                     Text(
                       widget.article.title,
@@ -109,6 +121,7 @@ class _ArticleViewState extends State<ArticleView> {
 
                     const SizedBox(height: 25),
 
+                    /// Render article blocks
                     ...blocks.map<Widget>((block) {
                       final map = Map<String, dynamic>.from(block);
 
@@ -121,20 +134,20 @@ class _ArticleViewState extends State<ArticleView> {
                         orderedCounter++;
                         return widget;
                       } else {
-                        // Reset counter when list ends
                         orderedCounter = 0;
-
                         return ArticleBlockRenderer(block: map);
                       }
                     }),
 
                     const SizedBox(height: 30),
 
-AskQuestionBox(articleId: widget.article.id),
+                    /// Ask question box
+                    AskQuestionBox(articleId: widget.article.id),
 
-const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-ArticleQuestionsList(articleId: widget.article.id),
+                    /// Questions list
+                    ArticleQuestionsList(articleId: widget.article.id),
                   ],
                 ),
               ),
