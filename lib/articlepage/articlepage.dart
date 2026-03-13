@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:theologia_app_1/articlepage/article_repository.dart';
-import 'package:theologia_app_1/articlepage/articleview.dart';
+import 'package:theologia_app_1/articlepage/articlerenderer.dart';
 import 'package:theologia_app_1/models/singlearticlemodel.dart';
 
 class ArticlePage extends StatefulWidget {
@@ -17,116 +16,169 @@ class ArticlePage extends StatefulWidget {
 }
 
 class _ArticlePageState extends State<ArticlePage> {
-  late Future<Singlearticlemodel?> _articleFuture;
+
+  late Stream<Singlearticlemodel?> _articleStream;
 
   @override
   void initState() {
     super.initState();
 
     debugPrint("📄 ArticlePage initState()");
-    debugPrint("📄 Article ID: ${widget.articleId}");
+    debugPrint("📄 ArticleId: ${widget.articleId}");
 
-    incrementArticleOpened();   // analytics
-    _loadArticle();
+    _articleStream = _createStream();
   }
 
-  void _loadArticle() {
-    debugPrint("🚀 Starting article fetch for ID: ${widget.articleId}");
+  Stream<Singlearticlemodel?> _createStream() {
+    debugPrint("📡 Article stream CREATED: ${widget.articleId}");
 
-    _articleFuture = ArticleRepository(
-      FirebaseFirestore.instance,
-    ).fetchArticle(widget.articleId).then((article) {
+    return FirebaseFirestore.instance
+        .collection('Articles')
+        .doc(widget.articleId)
+        .snapshots()
+        .map((doc) {
 
-      if (article == null) {
-        debugPrint("❌ Article fetch returned NULL");
-      } else {
-        debugPrint("✅ Article fetched successfully");
-        debugPrint("📄 Title: ${article.title}");
+      debugPrint("📡 Firestore snapshot received");
+
+      if (!doc.exists || doc.data() == null) {
+        debugPrint("❌ Article not found");
+        return null;
       }
 
-      return article;
-    }).catchError((error) {
+      try {
+        final article = Singlearticlemodel.fromFirestore(doc);
+        debugPrint("✅ Article parsed: ${article.title}");
+        return article;
+      } catch (e) {
+        debugPrint("🔥 Article parsing error: $e");
+        return null;
+      }
 
-      debugPrint("🔥 ERROR fetching article: $error");
-
-      return null;
+    }).handleError((error) {
+      debugPrint("🔥 Firestore stream error: $error");
     });
-  }
-
-  Future<void> incrementArticleOpened() async {
-    try {
-
-      debugPrint("📊 Incrementing openedCount for article: ${widget.articleId}");
-
-      await FirebaseFirestore.instance
-          .collection('Articles')
-          .doc(widget.articleId)
-          .update({
-        'analytics.openedCount': FieldValue.increment(1),
-      });
-
-      debugPrint("✅ openedCount increment success");
-
-    } catch (e) {
-
-      debugPrint("🔥 Analytics error: $e");
-
-    }
   }
 
   @override
   void dispose() {
-    debugPrint("🧹 ArticlePage disposed for ID: ${widget.articleId}");
+    debugPrint("🧹 ArticlePage disposed for: ${widget.articleId}");
     super.dispose();
+  }
+
+  Future<bool> _handleBack() async {
+    debugPrint("⬅️ Back pressed on ArticlePage");
+    return true; // allow navigation
   }
 
   @override
   Widget build(BuildContext context) {
 
-    debugPrint("🔄 ArticlePage build() called");
+    debugPrint("🔄 ArticlePage build()");
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      body: FutureBuilder<Singlearticlemodel?>(
-        future: _articleFuture,
-        builder: (context, snapshot) {
+    return WillPopScope(
+      onWillPop: _handleBack,
+      child: Scaffold(
+        body: StreamBuilder<Singlearticlemodel?>(
+          stream: _articleStream,
+          builder: (context, snapshot) {
 
-          debugPrint("📡 FutureBuilder state: ${snapshot.connectionState}");
+            debugPrint("📡 StreamBuilder state: ${snapshot.connectionState}");
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-            debugPrint("⏳ Waiting for article...");
+            if (!snapshot.hasData || snapshot.data == null) {
+              return const Center(child: Text("Article not found"));
+            }
 
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
+            final article = snapshot.data!;
+            int orderedCounter = 0;
+            final blocks = article.normalizedBlocks ?? [];
+
+            return CustomScrollView(
+              slivers: [
+
+                /// Sliver App Bar
+                SliverAppBar(
+                  pinned: true,
+                  expandedHeight: 220,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  flexibleSpace: FlexibleSpaceBar(
+                    titlePadding:
+                        const EdgeInsetsDirectional.only(start: 16, bottom: 16),
+                    title: Text(
+                      article.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    background: article.featuredImage != null
+                        ? Image.network(
+                            article.featuredImage!,
+                            fit: BoxFit.cover,
+                          )
+                        : Container(color: Colors.black12),
+                  ),
+                ),
+
+                /// Article Content
+                SliverPadding(
+                  padding: const EdgeInsets.all(20),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+
+                      /// Title
+                      Text(
+                        article.title,
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
+
+                      /// Excerpt
+                      if (article.excerpt.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          article.excerpt,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+
+                      const SizedBox(height: 20),
+                      const Divider(),
+                      const SizedBox(height: 20),
+
+                      /// Blocks
+                      ...blocks.map<Widget>((block) {
+
+                        final map = Map<String, dynamic>.from(block);
+
+                        if (map['type'] == 'list_item' &&
+                            map['ordered'] == true) {
+
+                          final widget = ArticleBlockRenderer(
+                            block: map,
+                            listIndex: orderedCounter,
+                          );
+
+                          orderedCounter++;
+                          return widget;
+
+                        } else {
+
+                          orderedCounter = 0;
+                          return ArticleBlockRenderer(block: map);
+                        }
+
+                      }),
+
+                      const SizedBox(height: 60),
+                    ]),
+                  ),
+                ),
+              ],
             );
-          }
-
-          if (snapshot.hasError) {
-
-            debugPrint("🔥 FutureBuilder error: ${snapshot.error}");
-
-            return const Scaffold(
-              body: Center(child: Text('Error loading article')),
-            );
-          }
-
-          if (!snapshot.hasData || snapshot.data == null) {
-
-            debugPrint("❌ Article data is null");
-
-            return const Scaffold(
-              body: Center(child: Text('Article not found')),
-            );
-          }
-
-          debugPrint("📖 Rendering ArticleView for: ${snapshot.data!.title}");
-
-          return ArticleView(
-            article: snapshot.data!,
-            heroTag: "article-${widget.articleId}",
-          );
-        },
+          },
+        ),
       ),
     );
   }

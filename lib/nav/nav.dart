@@ -74,18 +74,24 @@ final GoRouter appRouter = GoRouter(
     // --- Article Page (Outside the Shell) ---
     // Updated to accept an ID parameter
     GoRoute(
-      path: '/article/:id',
-      name: 'article',
-      builder: (BuildContext context, GoRouterState state) {
-        final articleId = state.pathParameters['id'];
+  path: '/article/:id',
+  name: 'article',
+  builder: (context, state) {
 
-        if (articleId == null || articleId.isEmpty) {
-          return const Scaffold(body: Center(child: Text('Article not found')));
-        }
+    final articleId = state.pathParameters['id'];
 
-        return ArticlePage(articleId: articleId);
-      },
-    ),
+    if (articleId == null || articleId.isEmpty) {
+      return const Scaffold(
+        body: Center(child: Text('Article not found')),
+      );
+    }
+
+    return ArticlePage(
+      key: ValueKey('article-$articleId'), // ensures new instance
+      articleId: articleId,
+    );
+  },
+),
 
     // --- Main App Shell (Bottom Navigation) ---
     ShellRoute(
