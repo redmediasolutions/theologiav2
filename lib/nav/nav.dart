@@ -11,10 +11,12 @@ import 'package:theologia_app_1/categorypage/collectiondetailpage.dart';
 import 'package:theologia_app_1/devotionpage/devotionpage.dart';
 import 'package:theologia_app_1/foryoupage/foryoupage.dart';
 import 'package:theologia_app_1/home/home.dart';
+import 'package:theologia_app_1/latestdevotion/latestdevotion.dart';
 import 'package:theologia_app_1/nav/shell.dart';
 import 'package:theologia_app_1/profilepage.dart';
 import 'package:theologia_app_1/searchpage/searchpage.dart';
-import 'package:theologia_app_1/auth/login.dart'; // Ensure you import your LoginScreen
+import 'package:theologia_app_1/auth/login.dart';
+import 'package:theologia_app_1/services/latestdevotionloader.dart'; // Ensure you import your LoginScreen
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -90,6 +92,30 @@ final GoRouter appRouter = GoRouter(
       key: ValueKey('article-$articleId'), // ensures new instance
       articleId: articleId,
     );
+  },
+),
+
+GoRoute(
+  path: '/devotion',
+  name: 'latest-devotion-link',
+  builder: (context, state) {
+    return const LatestDevotionLoader(); // 👈 we’ll create this
+  },
+),
+
+GoRoute(
+  path: '/latestdevotion',
+  name: 'latestdevotion',
+  builder: (context, state) {
+    final data = state.extra as Map<String, dynamic>?;
+
+    if (data == null) {
+      return const Scaffold(
+        body: Center(child: Text('Devotion not found')),
+      );
+    }
+
+    return LatestDevotion(data: data);
   },
 ),
 

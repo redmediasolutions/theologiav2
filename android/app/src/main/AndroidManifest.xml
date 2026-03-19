@@ -36,6 +36,11 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
+            <data
+                android:scheme="https"
+                android:host="theologia.app"
+                android:pathPrefix="/devotion" />
+
         </activity>
 
         <!-- Flutter embedding -->

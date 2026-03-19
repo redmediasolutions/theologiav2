@@ -154,39 +154,62 @@ class DailyAudioCard extends StatelessWidget {
     return Row(
       children: [
         ElevatedButton.icon(
-          onPressed: () {
-            if (isAnonymous) {
-              context.push('/login');
-              return;
-            }
+  onPressed: () {
+    if (isAnonymous) {
+      context.push('/login');
+      return;
+    }
 
-            miniPlayerDismissed.value = false;
+    /// Show mini player
+    miniPlayerDismissed.value = false;
 
-            AudioAnalyticsService.incrementAudioOpened(devotion.id);
+    /// Analytics
+    AudioAnalyticsService.incrementAudioOpened(devotion.id);
 
-            audioHandler.playMedia(
-              id: devotion.id,
-              title: devotion.episodeName ?? "",
-              url: devotion.episodeUrl ?? "",
-              imageUrl: devotion.episodeCoverUrl ?? "",
-            );
-          },
-          icon: Icon(isAnonymous ? Icons.lock : Icons.play_arrow),
-          label: Text(isAnonymous ? "Login to Play" : "Play Now"),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isAnonymous
-                ? Colors.grey.shade600
-                : colorScheme.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 28,
-              vertical: 14,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(50),
-            ),
-          ),
-        ),
+    /// ▶️ PLAY AUDIO FIRST
+    audioHandler.playMedia(
+      id: devotion.id,
+      title: devotion.episodeName ?? "",
+      url: devotion.episodeUrl ?? "",
+      imageUrl: devotion.episodeCoverUrl ?? "",
+    );
+
+    /// 🚀 THEN NAVIGATE
+    context.pushNamed(
+      'latestdevotion',
+      extra: {
+        'id': devotion.id,
+        'title': devotion.episodeName ?? "",
+        'subtitle': devotion.episodeDesc ?? "",
+        'audioUrl': devotion.episodeUrl ?? "",
+        'imageUrl': devotion.episodeCoverUrl,
+        'description': devotion.episodeDesc ?? "",
+        'transcript': devotion.episodeTranscript ?? "",
+        'duration': devotion.episodeduration ?? "12:45",
+        'songTitle': devotion.episodesongTitle ?? "",
+        'songArtist': devotion.episodesongArtist ?? "",
+        'songurl': devotion.episodesongUrl ?? "",
+        'verse': devotion.verse ?? "",
+        'verseReference': devotion.verseReference ?? "",
+      },
+    );
+  },
+
+  icon: Icon(isAnonymous ? Icons.lock : Icons.play_arrow),
+  label: Text(isAnonymous ? "Login to Play" : "Play Now"),
+  style: ElevatedButton.styleFrom(
+    backgroundColor:
+        isAnonymous ? Colors.grey.shade600 : colorScheme.primary,
+    foregroundColor: Colors.white,
+    padding: const EdgeInsets.symmetric(
+      horizontal: 28,
+      vertical: 14,
+    ),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(50),
+    ),
+  ),
+),
 
         const SizedBox(width: 16),
 

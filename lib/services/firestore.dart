@@ -400,8 +400,9 @@ Stream<List<ArticleModel>> getArticlesByCollection(String collectionId) {
 
 Stream<DevotionModel?> streamTodayDevotion() {
   return devotionsCollection
-      .where('episodeIsToday', isEqualTo: true)
+      //.where('episodeIsToday', isEqualTo: true)
       .where('isPublished', isEqualTo: true)
+      .orderBy('episodeData'  , descending: true)
       .limit(1)
       .snapshots()
       .handleError((error) {

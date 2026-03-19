@@ -14,6 +14,13 @@ class DevotionModel {
   final String? episodeCoverUrl;
   final String? episodeDesc; // Optional field for speaker's name
 
+  final String? episodesongTitle;
+  final String? episodesongArtist;
+  final String? episodesongUrl;
+
+  final String? verseReference;
+  final String? verse;
+
 
   DevotionModel({
     required this.id,
@@ -26,7 +33,13 @@ class DevotionModel {
     required this.episodeUrl,
     required this.isPublished,
     required this.episodeCoverUrl, 
-    required this.episodeduration, this.episodeDesc,
+    required this.episodeduration, 
+    this.episodeDesc,
+    this.episodesongTitle,
+    this.episodesongArtist,
+    this.episodesongUrl,
+    this.verseReference,
+    this.verse
   });
 
   factory DevotionModel.fromFirestore(
@@ -47,6 +60,12 @@ class DevotionModel {
       episodeUrl: data['episodeUrl'] ?? '',
       isPublished: data['isPublished'] ?? false, 
       episodeCoverUrl: data['episodeCoverUrl'] ?? '',
+      episodesongTitle: data['episodesongTitle'] ?? '',
+      episodesongArtist: data['episodesongArtist'] ?? '',
+      episodesongUrl: data['episodesongUrl'] ?? '',
+      verseReference: data['verseReference'] ?? '',
+      verse: data['verse'] ?? '',
+
     );
   }
 }
