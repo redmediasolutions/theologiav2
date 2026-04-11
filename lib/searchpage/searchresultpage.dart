@@ -14,7 +14,6 @@ class SearchResultsPage extends StatefulWidget {
 }
 
 class _SearchResultsPageState extends State<SearchResultsPage> {
-
   final FirestoreService firestore = FirestoreService();
   final TextEditingController _controller = TextEditingController();
 
@@ -43,7 +42,6 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -52,11 +50,10 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               /// SEARCH BAR
               SearchBar(
                 controller: _controller,
-                leading: const Icon(Icons.search,color: Colors.grey),
+                leading: const Icon(Icons.search, color: Colors.grey),
                 hintText: "Search articles, topics, categories...",
                 elevation: const WidgetStatePropertyAll(0),
                 backgroundColor: const WidgetStatePropertyAll(Colors.white),
@@ -75,44 +72,33 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
               /// RESULTS
               Expanded(
                 child: FutureBuilder<List<ArticleModel>>(
-
                   future: results,
 
                   builder: (context, snapshot) {
-
                     /// LOADING
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
+                      return const Center(child: CircularProgressIndicator());
                     }
 
                     /// ERROR
                     if (snapshot.hasError) {
-                      return Center(
-                        child: Text("Error: ${snapshot.error}"),
-                      );
+                      return Center(child: Text("Error: ${snapshot.error}"));
                     }
 
                     final articles = snapshot.data ?? [];
 
                     /// EMPTY
                     if (articles.isEmpty) {
-                      return const Center(
-                        child: Text("No results found"),
-                      );
+                      return const Center(child: Text("No results found"));
                     }
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-
                         /// RESULT COUNT
                         Text(
                           "${articles.length} result${articles.length == 1 ? '' : 's'} found",
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineMedium
+                          style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
@@ -126,7 +112,6 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                           child: ListView.builder(
                             itemCount: articles.length,
                             itemBuilder: (context, index) {
-
                               final article = articles[index];
 
                               return Padding(
@@ -134,17 +119,16 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
 
                                 child: GestureDetector(
                                   onTap: () {
-
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) =>
-                                            ArticlePage(articleId: article.id),
+                                        builder: (_) => ArticlePage(
+                                          value:
+                                              article.id, // ✅ use ID internally
+                                        ),
                                       ),
                                     );
-
                                   },
-
                                   child: CategoryTopicCard(
                                     title: article.title,
                                     summary: article.excerpt,
@@ -152,7 +136,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                                     date: _formatDate(article.createdAt),
                                     category: "Article",
                                     imageUrl: article.featuredImage ?? "",
-                                    views: "0", 
+                                    views: "0",
                                     articleId: article.id,
                                   ),
                                 ),

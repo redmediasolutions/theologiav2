@@ -16,6 +16,7 @@ import 'package:firebase_remote_config_web/firebase_remote_config_web.dart';
 import 'package:google_sign_in_web/google_sign_in_web.dart';
 import 'package:just_audio_web/just_audio_web.dart';
 import 'package:package_info_plus/src/package_info_plus_web.dart';
+import 'package:share_plus/src/share_plus_web.dart';
 import 'package:sign_in_with_apple_web/sign_in_with_apple_web.dart';
 import 'package:url_launcher_web/url_launcher_web.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
@@ -32,6 +33,7 @@ void registerPlugins([final Registrar? pluginRegistrar]) {
   GoogleSignInPlugin.registerWith(registrar);
   JustAudioPlugin.registerWith(registrar);
   PackageInfoPlusWebPlugin.registerWith(registrar);
+  SharePlusWebPlugin.registerWith(registrar);
   SignInWithApplePlugin.registerWith(registrar);
   UrlLauncherPlugin.registerWith(registrar);
   registrar.registerMessageHandler();

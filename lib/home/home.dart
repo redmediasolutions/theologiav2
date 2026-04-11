@@ -226,7 +226,8 @@ class HomeScreen extends StatelessWidget {
                                 episodeno: devotion.episodeNo.toString(),
                                 date: formatDate(devotion.episodeDate),
                                 audioUrl: devotion.episodeUrl ?? '',
-                                coverUrl: devotion.episodeCoverUrl ?? '',
+                                coverUrl: devotion.episodeCoverUrl ?? '', 
+                                slug: devotion.slug ?? '',
                               ),
                             ),
                           );

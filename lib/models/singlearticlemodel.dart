@@ -15,6 +15,9 @@ class Singlearticlemodel {
   final String? featuredImage;
   final Map<String, dynamic>? source;
 
+  // ✅ NEW FIELD
+  final String? slug;
+
   Singlearticlemodel({
     required this.id,
     required this.title,
@@ -29,6 +32,7 @@ class Singlearticlemodel {
     required this.lastUpdatedAt,
     this.featuredImage,
     this.source,
+    this.slug, // ✅ added
   });
 
   /// 🔥 Factory Constructor
@@ -47,15 +51,16 @@ class Singlearticlemodel {
       isPublished: data['isPublished'] ?? false,
       updateCount: data['update_count'] ?? 0,
       createdAt:
-          (data['created_at'] as Timestamp?)?.toDate() ??
-              DateTime.now(),
+          (data['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
       lastUpdatedAt:
-          (data['last_updated_at'] as Timestamp?)?.toDate() ??
-              DateTime.now(),
+          (data['last_updated_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
       featuredImage: data['featured_image'],
       source: data['source'] != null
           ? Map<String, dynamic>.from(data['source'])
           : null,
+
+      // ✅ FETCH SLUG
+      slug: data['slug'],
     );
   }
 
@@ -65,25 +70,25 @@ class Singlearticlemodel {
 
   /// 🔥 Private content normalizer
   List<Map<String, dynamic>> _normalizeContent() {
-  if (content.isEmpty) return [];
+    if (content.isEmpty) return [];
 
-  final full = content['full'];
-  if (full is! Map<String, dynamic>) return [];
+    final full = content['full'];
+    if (full is! Map<String, dynamic>) return [];
 
-  final rawBlocks = full['normalized_blocks'];
-  if (rawBlocks is! List) return [];
+    final rawBlocks = full['normalized_blocks'];
+    if (rawBlocks is! List) return [];
 
-  return rawBlocks.map<Map<String, dynamic>>((block) {
-    final map = Map<String, dynamic>.from(block);
+    return rawBlocks.map<Map<String, dynamic>>((block) {
+      final map = Map<String, dynamic>.from(block);
 
-    return {
-      'type': map['type'],
-      'level': map['level'],
-      'ordered': map['ordered'],
-      'reference': map['reference'],
-      'url': map['url'],
-      'content': map['content'], // 🔥 KEEP structured content
-    };
-  }).toList();
-}
+      return {
+        'type': map['type'],
+        'level': map['level'],
+        'ordered': map['ordered'],
+        'reference': map['reference'],
+        'url': map['url'],
+        'content': map['content'],
+      };
+    }).toList();
+  }
 }

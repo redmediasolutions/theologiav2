@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:theologia_app_1/main.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:theologia_app_1/services/audio_analytics_service.dart';
@@ -13,6 +14,8 @@ class RecentDevotions extends StatelessWidget {
   final String coverUrl;
   final String episodeno;
 
+  final String slug;
+
   const RecentDevotions({
     super.key,
     required this.id,
@@ -22,6 +25,7 @@ class RecentDevotions extends StatelessWidget {
     required this.audioUrl,
     required this.coverUrl,
     required this.episodeno,
+    required this.slug,
   });
 
   @override
@@ -42,16 +46,25 @@ class RecentDevotions extends StatelessWidget {
             return;
           }
 
-          /// Analytics
+          /// 🔥 Resolve slug or fallback to id
+          final value = (slug.isNotEmpty) ? slug : id;
+
+          /// 🔥 Show mini player
+          miniPlayerDismissed.value = false;
+
+          /// 🔥 Analytics
           AudioAnalyticsService.incrementAudioOpened(id);
 
-          /// Play audio
+          /// 🔥 Play audio
           audioHandler.playMedia(
             id: id,
             title: title,
             url: audioUrl,
             imageUrl: coverUrl,
           );
+
+          /// 🚀 Navigate to detail page
+          context.pushNamed('devotion', pathParameters: {'value': value});
         },
         child: Ink(
           decoration: BoxDecoration(
@@ -62,7 +75,6 @@ class RecentDevotions extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               /// IMAGE
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
@@ -90,7 +102,6 @@ class RecentDevotions extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     /// CATEGORY
                     Text(
                       "MORNING REFLECTION",
@@ -117,55 +128,75 @@ class RecentDevotions extends StatelessWidget {
 
                     /// PLAY BUTTON ROW
                     Row(
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            if (!isAuthenticated) {
-                              context.push('/login');
-                              return;
-                            }
-                             miniPlayerDismissed.value = false;
-                            /// Analytics
-                            AudioAnalyticsService.incrementAudioOpened(id);
+  children: [
+    /// ▶️ PLAY BUTTON
+    ElevatedButton.icon(
+      onPressed: () {
+        if (!isAuthenticated) {
+          context.push('/login');
+          return;
+        }
 
-                            /// Play audio
-                            audioHandler.playMedia(
-                              id: id,
-                              title: title,
-                              url: audioUrl,
-                              imageUrl: coverUrl,
-                            );
-                          },
-                          icon: Icon(
-                            isAuthenticated
-                                ? Icons.play_arrow
-                                : Icons.lock,
-                          ),
-                          label: Text(
-                            isAuthenticated
-                                ? "Play Now"
-                                : "Login to Play",
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isAuthenticated
-                                ? colors.primary
-                                : Colors.grey.shade600,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                          ),
-                        ),
+        final value = (slug.isNotEmpty) ? slug : id;
 
-                        const SizedBox(width: 12),
+        miniPlayerDismissed.value = false;
 
+        AudioAnalyticsService.incrementAudioOpened(id);
 
-                      ],
-                    ),
+        audioHandler.playMedia(
+          id: id,
+          title: title,
+          url: audioUrl,
+          imageUrl: coverUrl,
+        );
+
+        context.pushNamed(
+          'devotion',
+          pathParameters: {'value': value},
+        );
+      },
+      icon: Icon(
+        isAuthenticated ? Icons.play_arrow : Icons.lock,
+      ),
+      label: Text(
+        isAuthenticated ? "Play Now" : "Login to Play",
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isAuthenticated
+            ? colors.primary
+            : Colors.grey.shade600,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 12,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(50),
+        ),
+      ),
+    ),
+
+    const SizedBox(width: 12),
+
+    /// 🔗 SHARE BUTTON
+    IconButton(
+      onPressed: () async {
+        final value = (slug.isNotEmpty) ? slug : id;
+
+        final url = "https://theologia.in/devotion/$value";
+
+        final text = "$title\n\nListen on Theologia:\n$url";
+
+        await Share.share(text);
+      },
+      icon: const Icon(Icons.share_outlined),
+      style: IconButton.styleFrom(
+        backgroundColor: colors.surface,
+        padding: const EdgeInsets.all(12),
+      ),
+    ),
+  ],
+)
                   ],
                 ),
               ),

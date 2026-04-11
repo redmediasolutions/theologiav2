@@ -17,6 +17,9 @@ class _ForYouPageState extends State<ForYouPage> {
   final List<ArticleModel> articles = [];
   final ScrollController _scrollController = ScrollController();
 
+  final slugController = TextEditingController();
+bool _slugEditedManually = false;
+
   DocumentSnapshot? lastDocument;
 
   bool isLoading = false;
@@ -37,6 +40,15 @@ class _ForYouPageState extends State<ForYouPage> {
       }
     });
   }
+
+  String _generateSlug(String text) {
+  return text
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^\w\s-]'), '')
+      .trim()
+      .replaceAll(RegExp(r'\s+'), '-')
+      .replaceAll(RegExp(r'-+'), '-');
+}
 
   Future<void> _fetchArticles() async {
     if (isLoading || !hasMore) return;

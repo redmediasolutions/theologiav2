@@ -8,13 +8,17 @@ import 'package:theologia_app_1/articlepage/articlepage.dart';
 import 'package:theologia_app_1/auth/createaccount.dart';
 import 'package:theologia_app_1/auth/forgotpassword.dart';
 import 'package:theologia_app_1/categorypage/collectiondetailpage.dart';
+import 'package:theologia_app_1/devotionpage/devotiondetailpage.dart';
 import 'package:theologia_app_1/devotionpage/devotionpage.dart';
 import 'package:theologia_app_1/foryoupage/foryoupage.dart';
 import 'package:theologia_app_1/home/home.dart';
+import 'package:theologia_app_1/latestdevotion/latestdevotion.dart';
+import 'package:theologia_app_1/models/devotion_model.dart';
 import 'package:theologia_app_1/nav/shell.dart';
 import 'package:theologia_app_1/profilepage.dart';
 import 'package:theologia_app_1/searchpage/searchpage.dart';
-import 'package:theologia_app_1/auth/login.dart'; // Ensure you import your LoginScreen
+import 'package:theologia_app_1/auth/login.dart';
+import 'package:theologia_app_1/services/latestdevotionloader.dart'; // Ensure you import your LoginScreen
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -74,18 +78,42 @@ final GoRouter appRouter = GoRouter(
     // --- Article Page (Outside the Shell) ---
     // Updated to accept an ID parameter
     GoRoute(
-      path: '/article/:id',
-      name: 'article',
-      builder: (BuildContext context, GoRouterState state) {
-        final articleId = state.pathParameters['id'];
+  path: '/article/:value',
+  name: 'article',
+  builder: (context, state) {
+    final value = state.pathParameters['value'];
 
-        if (articleId == null || articleId.isEmpty) {
-          return const Scaffold(body: Center(child: Text('Article not found')));
-        }
+    if (value == null || value.isEmpty) {
+      return const Scaffold(
+        body: Center(child: Text('Article not found')),
+      );
+    }
 
-        return ArticlePage(articleId: articleId);
-      },
-    ),
+    return ArticlePage(
+      key: ValueKey('article-$value'),
+      value: value,
+    );
+  },
+),
+
+GoRoute(
+  path: '/devotion',
+  name: 'latest-devotion-link',
+  builder: (context, state) {
+    return const LatestDevotionLoader();
+  },
+),
+
+GoRoute(
+  path: '/devotion/:value',
+  name: 'devotion',
+  builder: (context, state) {
+    final value = state.pathParameters['value']!;
+    return DevotionPage(value: value);
+  },
+),
+
+
 
     // --- Main App Shell (Bottom Navigation) ---
     ShellRoute(

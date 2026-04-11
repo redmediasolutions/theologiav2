@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "UJ83Z99K68.com.redmediasolutions.theologiaapp",
+        "paths": [
+          "/article/*",
+          "/devotion/*"
+        ]
+      }
+    ]
+  }
+}

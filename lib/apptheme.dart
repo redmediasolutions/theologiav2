@@ -223,7 +223,7 @@ class AppTheme {
         bodyMedium: TextStyle(
           fontFamily: 'WorkSans',
           fontSize: 16,
-          height: 1.6,
+          height: 1.45,
           color: textDark,
         ),
 

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:theologia_app_1/apptheme.dart';
 import 'package:theologia_app_1/auth/login.dart';
 import 'package:theologia_app_1/main.dart';
@@ -151,53 +152,104 @@ class DailyAudioCard extends StatelessWidget {
     final user = snapshot.data;
     final isAnonymous = user == null || user.isAnonymous;
 
-    return Row(
-      children: [
-        ElevatedButton.icon(
-          onPressed: () {
-            if (isAnonymous) {
-              context.push('/login');
-              return;
-            }
+    return 
+    
+    Row(
+  children: [
+    StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        final user = snapshot.data;
+        final isAnonymous = user == null || user.isAnonymous;
 
-            miniPlayerDismissed.value = false;
+        final value =
+            (devotion.slug != null && devotion.slug!.isNotEmpty)
+                ? devotion.slug!
+                : devotion.id;
 
-            AudioAnalyticsService.incrementAudioOpened(devotion.id);
+        return Row(
+          children: [
+            /// ▶️ PLAY BUTTON
+            ElevatedButton.icon(
+              onPressed: () {
+                if (isAnonymous) {
+                  context.push('/login');
+                  return;
+                }
 
-            audioHandler.playMedia(
-              id: devotion.id,
-              title: devotion.episodeName ?? "",
-              url: devotion.episodeUrl ?? "",
-              imageUrl: devotion.episodeCoverUrl ?? "",
-            );
-          },
-          icon: Icon(isAnonymous ? Icons.lock : Icons.play_arrow),
-          label: Text(isAnonymous ? "Login to Play" : "Play Now"),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isAnonymous
-                ? Colors.grey.shade600
-                : colorScheme.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 28,
-              vertical: 14,
+                miniPlayerDismissed.value = false;
+
+                AudioAnalyticsService.incrementAudioOpened(
+                  devotion.id,
+                );
+
+                audioHandler.playMedia(
+                  id: devotion.id,
+                  title: devotion.episodeName ?? "",
+                  url: devotion.episodeUrl ?? "",
+                  imageUrl: devotion.episodeCoverUrl ?? "",
+                );
+
+                context.pushNamed(
+                  'devotion',
+                  pathParameters: {'value': value},
+                );
+              },
+              icon: Icon(
+                  isAnonymous ? Icons.lock : Icons.play_arrow),
+              label: Text(
+                  isAnonymous ? "Login to Play" : "Play Now"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isAnonymous
+                    ? Colors.grey.shade600
+                    : colorScheme.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+              ),
             ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(50),
+
+            const SizedBox(width: 12),
+
+            /// 🔗 SHARE BUTTON
+            IconButton(
+              onPressed: () async {
+                final url =
+                    "https://theologia.in/devotion/$value";
+
+                final text =
+                    "${devotion.episodeName}\n\nListen on Theologia:\n$url";
+
+                await Share.share(text);
+              },
+              icon: const Icon(Icons.share_outlined),
+              style: IconButton.styleFrom(
+                backgroundColor: colorScheme.surface,
+                padding: const EdgeInsets.all(12),
+              ),
             ),
-          ),
-        ),
 
-        const SizedBox(width: 16),
+            const SizedBox(width: 16),
 
-        Text(
-          devotion.episodeduration ?? "",
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
-          ),
-        ),
-      ],
-    );
+            /// ⏱️ DURATION
+            Text(
+              devotion.episodeduration ?? "",
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.textTheme.bodyMedium?.color
+                    ?.withOpacity(0.6),
+              ),
+            ),
+          ],
+        );
+      },
+    ),
+  ],
+);
   },
 ),
   ],

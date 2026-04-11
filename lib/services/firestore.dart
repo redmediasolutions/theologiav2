@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:theologia_app_1/models/article_question_model.dart';
 import 'package:theologia_app_1/models/articlemodels.dart';
+import 'package:theologia_app_1/models/articlepreviewmodel.dart';
 import 'package:theologia_app_1/models/collection_model.dart';
 import 'package:theologia_app_1/models/collectionarticleview.dart';
 import 'package:theologia_app_1/models/devotion_model.dart';
@@ -169,7 +171,7 @@ Stream<List<ArticleModel>> getArticlesByCollection(String collectionId) {
             title: data['title'] ?? 'Untitled',
             summary: data['summary'] ?? '',
             order: data['order'] ?? 0,
-            featuredImage: data['featuredImage'],
+            featuredImage: data['featured_image'],
           );
         }).toList();
       } catch (e) {
@@ -179,6 +181,176 @@ Stream<List<ArticleModel>> getArticlesByCollection(String collectionId) {
     });
   }
 
+  // Collection article -- similar to top but more efficient
+
+  Stream<List<ArticleModel>> streamArticlesForCollection(String collectionId) {
+  return _db
+      .collection('collection_articles')
+      .where('collectionId', isEqualTo: collectionId)
+      .orderBy('order')
+      .snapshots()
+      .asyncMap((snapshot) async {
+    try {
+      final docs = snapshot.docs;
+
+      if (docs.isEmpty) return [];
+
+      // 👉 Step 1: Extract IDs in order
+      final articleIds = docs
+          .map((doc) => doc['articleId'] as String)
+          .toList();
+
+      // 👉 Step 2: Fetch Articles
+      final articlesSnap = await _db
+    .collection('Articles')
+    .where(FieldPath.documentId, whereIn: articleIds)
+    .get();
+
+final articlesMap = {
+  for (var doc in articlesSnap.docs) doc.id: doc
+};
+
+return articleIds.map((id) {
+  final doc = articlesMap[id];
+  if (doc == null) return null;
+
+  return ArticleModel.fromFirestore(doc);
+}).whereType<ArticleModel>().toList();
+    } catch (e) {
+      print('Error fetching collection articles: $e');
+      return [];
+    }
+  });
+}
+
+
+// NEW ARTICLES STREAM
+
+ Future<List<ArticlePreviewModel>> fetchArticlesForCollection(
+    String collectionId) async {
+  try {
+    debugPrint("🚀 Fetching articles for collection: $collectionId");
+
+    // 👉 Step 1: Get collection_articles
+    final snapshot = await _db
+        .collection('collection_articles')
+        .where('collectionId', isEqualTo: collectionId)
+        .orderBy('order')
+        .get();
+
+    debugPrint("📦 collection_articles fetched: ${snapshot.docs.length}");
+
+    if (snapshot.docs.isEmpty) {
+      debugPrint("⚠️ No documents found in collection_articles");
+      return [];
+    }
+
+    // 👉 Log documents
+    for (var doc in snapshot.docs) {
+      debugPrint("📄 Doc ID: ${doc.id} | Data: ${doc.data()}");
+    }
+
+    // 👉 Step 2: Extract article IDs
+    final articleIds = snapshot.docs.map((doc) {
+      final id = doc['articleId'] as String?;
+      debugPrint("🔑 Extracted articleId: $id");
+      return id;
+    }).whereType<String>().toList();
+
+    debugPrint("🧾 Total article IDs: ${articleIds.length}");
+    debugPrint("🧾 Article IDs: $articleIds");
+
+    if (articleIds.isEmpty) {
+      debugPrint("❌ No valid article IDs found");
+      return [];
+    }
+
+    // 👉 Step 3: Fetch articles (chunked)
+    debugPrint("🚀 Starting chunk fetch...");
+    final articleDocs = await _fetchArticlesInChunks(articleIds);
+
+    debugPrint("📚 Articles fetched: ${articleDocs.length}");
+
+    // 👉 Step 4: Map by ID
+    final articlesMap = {
+      for (var doc in articleDocs) doc.id: doc
+    };
+
+    debugPrint("🗂️ Articles map keys: ${articlesMap.keys}");
+
+    // 👉 Step 5: Convert to PREVIEW model safely
+    final orderedArticles = articleIds.map((id) {
+      final doc = articlesMap[id];
+
+      if (doc == null) {
+        debugPrint("⚠️ Missing article for ID: $id");
+        return null;
+      }
+
+      try {
+        final data = doc.data() as Map<String, dynamic>?;
+
+        final article = ArticlePreviewModel(
+          id: doc.id,
+          title: data?['title'] ?? 'Untitled',
+          featuredImage: data?['featured_image'],
+        );
+
+        debugPrint("✅ Preview parsed: ${article.title}");
+        return article;
+      } catch (e) {
+        debugPrint("🔥 Error parsing preview $id: $e");
+        return null;
+      }
+    }).whereType<ArticlePreviewModel>().toList();
+
+    debugPrint("🎯 Final preview articles count: ${orderedArticles.length}");
+
+    return orderedArticles;
+  } catch (e, stack) {
+    debugPrint("🔥 ERROR fetching collection articles: $e");
+    debugPrintStack(stackTrace: stack);
+    rethrow;
+  }
+}
+  /// 🔥 INTERNAL: handles Firestore whereIn limit (10)
+  Future<List<QueryDocumentSnapshot>> _fetchArticlesInChunks(
+    List<String> ids) async {
+  List<QueryDocumentSnapshot> allDocs = [];
+
+  debugPrint("🔄 Fetching articles in chunks...");
+  debugPrint("📊 Total IDs: ${ids.length}");
+
+  for (int i = 0; i < ids.length; i += 10) {
+    final chunk = ids.sublist(
+      i,
+      i + 10 > ids.length ? ids.length : i + 10,
+    );
+
+    debugPrint("📦 Fetching chunk: $chunk");
+
+    try {
+      final snap = await _db
+          .collection('Articles')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+
+      debugPrint("📥 Chunk result count: ${snap.docs.length}");
+
+      for (var doc in snap.docs) {
+        debugPrint("📘 Found article: ${doc.id}");
+      }
+
+      allDocs.addAll(snap.docs);
+    } catch (e) {
+      debugPrint("🔥 Chunk fetch error: $e");
+    }
+  }
+
+  debugPrint("📊 Total fetched articles: ${allDocs.length}");
+
+  return allDocs;
+}
   // =========================================================
   // ALL COLLECTIONS
   // =========================================================
@@ -400,8 +572,9 @@ Stream<List<ArticleModel>> getArticlesByCollection(String collectionId) {
 
 Stream<DevotionModel?> streamTodayDevotion() {
   return devotionsCollection
-      .where('episodeIsToday', isEqualTo: true)
+      //.where('episodeIsToday', isEqualTo: true)
       .where('isPublished', isEqualTo: true)
+      .orderBy('episodeData'  , descending: true)
       .limit(1)
       .snapshots()
       .handleError((error) {
@@ -453,6 +626,93 @@ Stream<DevotionModel?> streamTodayDevotion() {
     } catch (e) {
       print('Article mapping error: $e');
       return [];
+    }
+  }
+
+  Stream<Singlearticlemodel?> getArticle(String articleId) {
+    return _db
+        .collection('Articles')
+        .doc(articleId)
+        .snapshots()
+        .map((doc) {
+          if (!doc.exists || doc.data() == null) return null;
+
+          return Singlearticlemodel.fromFirestore(doc);
+        });
+  }
+// FETCH ARTICLE BY SLUG
+  Stream<Singlearticlemodel?> getArticleBySlug(String slug) {
+  return FirebaseFirestore.instance
+      .collection('Articles')
+      .where('slug', isEqualTo: slug)
+      .limit(1)
+      .snapshots()
+      .map((snapshot) {
+        try {
+          // 🔥 No result
+          if (snapshot.docs.isEmpty) {
+            debugPrint("❌ No article found for slug: $slug");
+            return null;
+          }
+
+          final doc = snapshot.docs.first;
+
+          debugPrint("✅ Article found via slug: ${doc.id}");
+
+          return Singlearticlemodel.fromFirestore(doc);
+        } catch (e) {
+          debugPrint("🔥 Error parsing article (slug): $e");
+          return null;
+        }
+      })
+      .handleError((error) {
+        debugPrint("🔥 Firestore stream error (slug): $error");
+      });
+}
+
+/// 🔥 GET BY ID
+  Future<DevotionModel?> getDevotionById(String id) async {
+    try {
+      final doc = await _db.collection('Devotions').doc(id).get();
+
+      if (!doc.exists) {
+        print("❌ Devotion not found for ID: $id");
+        return null;
+      }
+
+      print("✅ Devotion loaded via ID: $id");
+
+      return DevotionModel.fromFirestore(doc);
+    } catch (e) {
+      print("🔥 Error fetching devotion by ID: $e");
+      return null;
+    }
+  }
+
+  /// 🔥 GET BY SLUG
+  Future<DevotionModel?> getDevotionBySlug(String slug) async {
+    try {
+      print("🔍 Fetching devotion by slug: $slug");
+
+      final snapshot = await _db
+          .collection('Devotions')
+          .where('slug', isEqualTo: slug)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        print("❌ No devotion found for slug: $slug");
+        return null;
+      }
+
+      final doc = snapshot.docs.first;
+
+      print("✅ Devotion found for slug: ${doc.id}");
+
+      return DevotionModel.fromFirestore(doc);
+    } catch (e) {
+      print("🔥 Error fetching devotion by slug: $e");
+      return null;
     }
   }
 }

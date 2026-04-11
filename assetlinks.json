@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.redmediasolutions.theologiaapp",
+      "sha256_cert_fingerprints": [
+        "DF:12:18:76:50:73:6A:EF:86:79:EA:13:A4:AF:16:32:7C:43:33:E7:EE:D3:65:80:84:D8:DF:1A:CD:AA:C1:16"
+      ]
+    }
+  }
+]

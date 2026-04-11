@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class CategoryTopicCard extends StatelessWidget {
   final String articleId;
@@ -25,41 +26,49 @@ class CategoryTopicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Card(
       elevation: 1.5,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       clipBehavior: Clip.antiAlias, // important for ripple clipping
 
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
 
-        onTap: () {
-          context.pushNamed(
-            'article',
-            pathParameters: {
-              'id': articleId,
-            },
-          );
-        },
-
+      onTap: () {
+  context.pushNamed(
+    'article',
+    pathParameters: {'value': articleId},
+  );
+},
         child: Padding(
           padding: const EdgeInsets.all(16),
 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               /// Image with ripple
               ClipRRect(
                 borderRadius: BorderRadius.circular(18),
-                child: Ink.image(
-                  image: NetworkImage(imageUrl),
-                  height: 170,
+                child: SizedBox(
+                  height: 240,
                   width: double.infinity,
-                  fit: BoxFit.cover,
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl.isNotEmpty
+                        ? imageUrl
+                        : 'https://via.placeholder.com/300',
+
+                    fit: BoxFit.fill,
+
+                    /// 🔥 Prevent memory overload
+                    memCacheWidth: 600,
+                    memCacheHeight: 350,
+
+                    placeholder: (context, url) =>
+                        Container(color: Colors.grey[300]),
+
+                    errorWidget: (context, url, error) =>
+                        const Center(child: Icon(Icons.image, size: 40)),
+                  ),
                 ),
               ),
 
@@ -84,10 +93,7 @@ class CategoryTopicCard extends StatelessWidget {
 
                   Text(
                     date,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey,
-                    ),
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                 ],
               ),
@@ -98,10 +104,10 @@ class CategoryTopicCard extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
-                    ),
+                  fontSize: 26,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                ),
               ),
 
               const SizedBox(height: 10),
@@ -129,25 +135,22 @@ class CategoryTopicCard extends StatelessWidget {
 
                   Text(
                     readtime,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 13,
-                    ),
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),
                   ),
 
                   const SizedBox(width: 18),
 
-                  const Icon(Icons.visibility_outlined,
-                      size: 18, color: Colors.grey),
+                  const Icon(
+                    Icons.visibility_outlined,
+                    size: 18,
+                    color: Colors.grey,
+                  ),
 
                   const SizedBox(width: 6),
 
                   Text(
                     views,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 13,
-                    ),
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),
                   ),
                 ],
               ),

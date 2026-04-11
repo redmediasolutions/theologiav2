@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Theologia Devotion</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      background: #111;
+      color: white;
+    }
+
+    .btn {
+      display: inline-block;
+      margin: 10px;
+      padding: 14px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+
+    .primary {
+      background: #b79260;
+      color: white;
+    }
+
+    .secondary {
+      background: #333;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>Listen on Theologia</h2>
+  <p>Open this devotion in the app for the best experience.</p>
+
+  <a id="openApp" class="btn primary">Open App</a>
+  <br/>
+  <a href="https://play.google.com/store/apps/details?id=com.redmediasolutions.theologiaapp"
+     class="btn secondary">
+    Download App
+  </a>
+
+  <script>
+    const path = window.location.pathname;
+    const slug = path.split("/").pop();
+
+    const deepLink = "https://theologia.in/devotion/" + slug;
+
+    document.getElementById("openApp").href = deepLink;
+
+    // Try auto open app
+    setTimeout(() => {
+      window.location.href = deepLink;
+    }, 500);
+  </script>
+
+</body>
+</html>

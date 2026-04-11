@@ -1,4 +1,6 @@
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ArticleModel {
   final String id;
 
@@ -35,4 +37,28 @@ class ArticleModel {
 
   /// 🧪 Helpful getters
   bool get hasTitle => title.trim().isNotEmpty;
+
+  factory ArticleModel.fromFirestore(DocumentSnapshot doc) {
+  final data = doc.data() as Map<String, dynamic>;
+
+  return ArticleModel(
+    id: doc.id,
+    authorId: data['author_id'] ?? '',
+    categoryIds: List<String>.from(data['category_ids'] ?? []),
+
+    createdAt: (data['created_at'] as Timestamp?)?.toDate() ??
+        DateTime.now(),
+
+    lastUpdatedAt: (data['last_updated_at'] as Timestamp?)?.toDate() ??
+        DateTime.now(),
+
+    createdBy: data['created_by'] ?? '',
+    excerpt: data['excerpt'] ?? '',
+    isPublished: data['isPublished'] ?? false,
+    title: data['title'] ?? 'Untitled',
+
+    featuredImage: data['featured_image'],
+    source: data['source'],
+  );
+}
 }

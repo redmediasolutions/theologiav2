@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DevotionModel {
   final String id;
+  final String? slug; // ✅ NEW
+
   final DateTime episodeDate;
   final bool episodeIsToday;
   final String episodeName;
@@ -14,9 +16,18 @@ class DevotionModel {
   final String? episodeCoverUrl;
   final String? episodeDesc; // Optional field for speaker's name
 
+  final String? episodesongTitle;
+  final String? episodesongArtist;
+  final String? episodesongUrl;
+
+  final String? verseReference;
+  final String? verse;
+
 
   DevotionModel({
     required this.id,
+        this.slug, // ✅ NEW
+
     required this.episodeDate,
     required this.episodeIsToday,
     required this.episodeName,
@@ -26,7 +37,13 @@ class DevotionModel {
     required this.episodeUrl,
     required this.isPublished,
     required this.episodeCoverUrl, 
-    required this.episodeduration, this.episodeDesc,
+    required this.episodeduration, 
+    this.episodeDesc,
+    this.episodesongTitle,
+    this.episodesongArtist,
+    this.episodesongUrl,
+    this.verseReference,
+    this.verse
   });
 
   factory DevotionModel.fromFirestore(
@@ -35,6 +52,8 @@ class DevotionModel {
 
     return DevotionModel(
       id: doc.id,
+            slug: data['slug'], // ✅ ADD THIS
+
       episodeDate:
           (data['episodeData'] as Timestamp).toDate(),
       episodeDesc: data['episodeDesc'], // Optional field for speaker's name
@@ -47,6 +66,12 @@ class DevotionModel {
       episodeUrl: data['episodeUrl'] ?? '',
       isPublished: data['isPublished'] ?? false, 
       episodeCoverUrl: data['episodeCoverUrl'] ?? '',
+      episodesongTitle: data['episodesongTitle'] ?? '',
+      episodesongArtist: data['episodesongArtist'] ?? '',
+      episodesongUrl: data['episodesongUrl'] ?? '',
+      verseReference: data['verseReference'] ?? '',
+      verse: data['verse'] ?? '',
+
     );
   }
 }

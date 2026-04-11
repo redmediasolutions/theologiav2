@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:theologia_app_1/main.dart';
 import 'package:theologia_app_1/services/audio_analytics_service.dart';
+import 'package:share_plus/share_plus.dart';
 
 class TodaysDevotionContainer extends StatelessWidget {
   final String id;
@@ -20,6 +21,13 @@ class TodaysDevotionContainer extends StatelessWidget {
     this.imageUrl,
   });
 
+  Future<void> _shareDevotion(BuildContext context) async {
+  final url = "https://theologia.in/devotion/$id";
+
+  final text = "$title\n\nListen on Theologia:\n$url";
+
+  await Share.share(text);
+}
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -73,6 +81,18 @@ class TodaysDevotionContainer extends StatelessWidget {
             ),
           ),
 
+/// 🔗 SHARE BUTTON (TOP RIGHT)
+Positioned(
+  top: 12,
+  right: 12,
+  child: IconButton(
+    icon: const Icon(Icons.share, color: Colors.white),
+    onPressed: () => _shareDevotion(context),
+    style: IconButton.styleFrom(
+      backgroundColor: Colors.black.withOpacity(0.4),
+    ),
+  ),
+),
           /// CONTENT
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
