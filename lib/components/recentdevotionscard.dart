@@ -12,6 +12,7 @@ class RecentDevotionCard extends StatelessWidget {
   final String date;
   final String audioUrl;
   final String? imageUrl;
+  final String? slug;
 
   const RecentDevotionCard({
     super.key,
@@ -21,12 +22,16 @@ class RecentDevotionCard extends StatelessWidget {
     required this.date,
     required this.audioUrl,
     this.imageUrl,
+    this.slug
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final parsedDate = DateTime.parse(date);
+
+    final value =
+        (slug != null && slug!.isNotEmpty) ? slug! : id;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -141,7 +146,7 @@ class RecentDevotionCard extends StatelessWidget {
                     miniPlayerDismissed.value = false;
 
                     /// Analytics
-                    AudioAnalyticsService.incrementAudioOpened(id);
+                    //AudioAnalyticsService.incrementAudioOpened(id);
 
                     /// Play audio
                     audioHandler.playMedia(
@@ -150,6 +155,12 @@ class RecentDevotionCard extends StatelessWidget {
                       url: audioUrl,
                       imageUrl: imageUrl,
                     );
+
+
+                              context.pushNamed(
+                              'devotion',
+                              pathParameters: {'value': value},
+                            );
                   },
 
                   child: Ink(

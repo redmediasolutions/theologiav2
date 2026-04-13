@@ -6,6 +6,7 @@ import 'package:theologia_app_1/models/articlepreviewmodel.dart';
 import 'package:theologia_app_1/models/collection_model.dart';
 import 'package:theologia_app_1/models/collectionarticleview.dart';
 import 'package:theologia_app_1/models/devotion_model.dart';
+import 'package:theologia_app_1/models/homesection_model.dart';
 import 'package:theologia_app_1/models/singlearticlemodel.dart';
 
 class FirestoreService {
@@ -172,6 +173,7 @@ Stream<List<ArticleModel>> getArticlesByCollection(String collectionId) {
             summary: data['summary'] ?? '',
             order: data['order'] ?? 0,
             featuredImage: data['featured_image'],
+            slug: data['slug'],
           );
         }).toList();
       } catch (e) {
@@ -223,8 +225,86 @@ return articleIds.map((id) {
   });
 }
 
+// NEW STREAM for displaying collections
+Future<List<ArticlePreviewModel>> newstreamArticlesForCollection(
+    String collectionId) async {
+  try {
+    debugPrint("📡 Fetching articles for collection (Future): $collectionId");
 
-// NEW ARTICLES STREAM
+    /// 👉 Step 1: Get collection_articles (ONE TIME)
+    final snapshot = await _db
+        .collection('collection_articles')
+        .where('collectionId', isEqualTo: collectionId)
+        .orderBy('order')
+        .get();
+
+    debugPrint("📦 collection_articles fetched: ${snapshot.docs.length}");
+
+    if (snapshot.docs.isEmpty) {
+      debugPrint("⚠️ No documents found in collection_articles");
+      return [];
+    }
+
+    /// 👉 Step 2: Extract article IDs
+    final articleIds = snapshot.docs.map((doc) {
+      final id = doc['articleId'] as String?;
+      debugPrint("🔑 Extracted articleId: $id");
+      return id;
+    }).whereType<String>().toList();
+
+    debugPrint("🧾 Article IDs: $articleIds");
+
+    if (articleIds.isEmpty) {
+      return [];
+    }
+
+    /// 👉 Step 3: Fetch articles (same chunk logic)
+    debugPrint("🚀 Starting chunk fetch...");
+    final articleDocs = await _fetchArticlesInChunks(articleIds);
+
+    debugPrint("📚 Articles fetched: ${articleDocs.length}");
+
+    /// 👉 Step 4: Map by ID
+    final articlesMap = {
+      for (var doc in articleDocs) doc.id: doc
+    };
+
+    /// 👉 Step 5: Preserve order
+    final orderedArticles = articleIds.map((id) {
+      final doc = articlesMap[id];
+
+      if (doc == null) {
+        debugPrint("⚠️ Missing article for ID: $id");
+        return null;
+      }
+
+      try {
+        final data = doc.data() as Map<String, dynamic>?;
+
+        final article = ArticlePreviewModel(
+          id: doc.id,
+          title: data?['title'] ?? 'Untitled',
+          featuredImage: data?['featured_image'],
+        );
+
+        debugPrint("✅ Preview parsed: ${article.title}");
+        return article;
+      } catch (e) {
+        debugPrint("🔥 Error parsing preview $id: $e");
+        return null;
+      }
+    }).whereType<ArticlePreviewModel>().toList();
+
+    debugPrint("🎯 Final articles count: ${orderedArticles.length}");
+
+    return orderedArticles;
+  } catch (e, stack) {
+    debugPrint("🔥 ERROR in newstreamArticlesForCollection: $e");
+    debugPrintStack(stackTrace: stack);
+    rethrow;
+  }
+}
+// NEW ARTICLES STREAM - OLD STREAM
 
  Future<List<ArticlePreviewModel>> fetchArticlesForCollection(
     String collectionId) async {
@@ -715,4 +795,65 @@ Stream<DevotionModel?> streamTodayDevotion() {
       return null;
     }
   }
+
+  // =========================================================
+// HOME SECTIONS
+// =========================================================
+
+Stream<List<HomeSectionModel>> streamHomeSections() {
+  debugPrint("🔥 streamHomeSections CREATED");
+
+  return _db
+      .collection('home_sections')
+      .where('isActive', isEqualTo: true)
+      .orderBy('order')
+      .snapshots()
+      .handleError((error) {
+        debugPrint("🔥 Home sections stream ERROR: $error");
+      })
+      .map((snapshot) {
+        debugPrint("📡 Home sections SNAPSHOT received");
+        debugPrint("📊 Sections count: ${snapshot.docs.length}");
+
+        try {
+          final result = snapshot.docs.map((doc) {
+            return HomeSectionModel.fromFirestore(
+              doc as DocumentSnapshot<Map<String, dynamic>>,
+            );
+          }).toList();
+
+          debugPrint("✅ Home sections mapped successfully");
+
+          return result;
+        } catch (e, stack) {
+          debugPrint("🔥 Home section mapping ERROR: $e");
+          debugPrintStack(stackTrace: stack);
+          return [];
+        }
+      });
+}
+
+Future<void> incrementArticleOpened(String articleId) async {
+  try {
+    await _db.collection('Articles').doc(articleId).set({
+      "analytics": {"openedCount": FieldValue.increment(1)},
+    }, SetOptions(merge: true));
+
+    debugPrint("📊 Opened incremented: $articleId");
+  } catch (e) {
+    debugPrint("🔥 Opened error: $e");
+  }
+}
+
+Future<void> incrementArticleCompleted(String articleId) async {
+  try {
+    await _db.collection('Articles').doc(articleId).set({
+      "analytics": {"completedCount": FieldValue.increment(1)},
+    }, SetOptions(merge: true));
+
+    debugPrint("✅ Completed incremented: $articleId");
+  } catch (e) {
+    debugPrint("🔥 Completed error: $e");
+  }
+}
 }

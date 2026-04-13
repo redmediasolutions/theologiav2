@@ -122,7 +122,7 @@ class TranscriptSection extends StatelessWidget {
       children: [
 
         Text(
-          "NOTES",
+          "TRANSCRIPT",
           style: theme.textTheme.labelSmall?.copyWith(
             letterSpacing: 1.5,
             fontSize: 14,

@@ -53,7 +53,7 @@ class RecentDevotions extends StatelessWidget {
           miniPlayerDismissed.value = false;
 
           /// 🔥 Analytics
-          AudioAnalyticsService.incrementAudioOpened(id);
+          //AudioAnalyticsService.incrementAudioOpened(id);
 
           /// 🔥 Play audio
           audioHandler.playMedia(
@@ -141,7 +141,7 @@ class RecentDevotions extends StatelessWidget {
 
         miniPlayerDismissed.value = false;
 
-        AudioAnalyticsService.incrementAudioOpened(id);
+        //AudioAnalyticsService.incrementAudioOpened(id);
 
         audioHandler.playMedia(
           id: id,

@@ -41,46 +41,46 @@ class CategoriesButton extends StatelessWidget {
                   color: colors.primaryContainer,
                 ),
                 child: Center(
-  child: Container(
-    width: 60,
-    height: 60,
-    decoration: const BoxDecoration(
-      shape: BoxShape.circle,
-      color: Colors.white,
-    ),
-    alignment: Alignment.center,
-    child: iconPath.isNotEmpty
-    ? SvgPicture.asset(
-        iconPath,
-        width: 36,
-        height: 36,
-        colorFilter: ColorFilter.mode(
-          colors.primary,
-          BlendMode.srcIn,
-        ),
-        placeholderBuilder: (context) => const SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-        errorBuilder: (context, error, stackTrace) {
-          return Icon(
-            Icons.menu_book,
-            size: 32,
-            color: colors.primary,
-          );
-        },
-      )
-    : Icon(
-        Icons.menu_book,
-        size: 32,
-        color: colors.primary,
-      ),
-  ),
-),
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    alignment: Alignment.center,
+                    child: iconPath.isNotEmpty
+                        ? SvgPicture.asset(
+                            iconPath,
+                            width: 36,
+                            height: 36,
+                            colorFilter: ColorFilter.mode(
+                              colors.primary,
+                              BlendMode.srcIn,
+                            ),
+                            placeholderBuilder: (context) => const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.menu_book,
+                                size: 32,
+                                color: colors.primary,
+                              );
+                            },
+                          )
+                        : Icon(
+                            Icons.menu_book,
+                            size: 32,
+                            color: colors.primary,
+                          ),
+                  ),
                 ),
               ),
             ),
+          ),
           const SizedBox(height: 3),
           Text(
             topic,

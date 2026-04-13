@@ -6,7 +6,9 @@ import 'package:theologia_app_1/components/globalscaffold.dart';
 import 'package:theologia_app_1/components/questionscontainer.dart';
 import 'package:theologia_app_1/components/updatechecker.dart';
 import 'package:theologia_app_1/home/DailyAudioCard.dart';
+import 'package:theologia_app_1/home/collectionsforhome.dart';
 import 'package:theologia_app_1/home/featuredarticles.dart';
+import 'package:theologia_app_1/home/homesections.dart';
 import 'package:theologia_app_1/home/recentdevotions.dart';
 import 'package:theologia_app_1/main.dart';
 import 'package:theologia_app_1/models/collection_model.dart';
@@ -40,77 +42,10 @@ class HomeScreen extends StatelessWidget {
                 // LISTEN TO DEVOTIONS
                 DailyAudioCard(devotionService: devotionService),
                 SizedBox(height: 40),
-                Row(
-                  children: [
-                    Icon(Icons.menu_book_rounded, color: Colors.brown),
-                    SizedBox(width: 10),
-                    Text(
-                      'Featured Articles',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                    Spacer(),
-                    Icon(Icons.arrow_right_outlined),
-                  ],
-                ),
-                SizedBox(height: 20),
-                const FeaturedArticlesHorizontal(),
+                Collectionsforhome(),
                 SizedBox(height: 40),
-      
-                Row(
-                  children: [
-                    Icon(Icons.grid_3x3_rounded, color: Colors.brown),
-                    SizedBox(width: 10),
-                    Text(
-                      'Collections',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                    Spacer(),
-                    Icon(Icons.arrow_right_outlined),
-                  ],
-                ),
-                SizedBox(height: 20),
-                SizedBox(
-                  height: 150,
-                  child: StreamBuilder<List<CollectionModel>>(
-                    stream: FirestoreService().streamCollectionsforHome(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const SizedBox.shrink();
-                      }
-      
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const SizedBox.shrink();
-                      }
-      
-                      final collections = snapshot.data!;
-      
-                      return ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        //padding: const EdgeInsets.symmetric(horizontal: ),
-                        itemCount: collections.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 20),
-                        itemBuilder: (context, index) {
-                          final collection = collections[index];
-      
-                          return CategoriesButton(
-                            topic: collection.title, 
-                            id: collection.id, 
-                            iconPath: collection.collectionicon,);
-                        },
-                      );
-                    },
-                  ),
-                ),
-                SizedBox(height: 20),
-                SizedBox(height: 20),
+                HomeSectionsWidget(),
+                SizedBox(height: 40),
                 Row(
                   children: [
                     Icon(Icons.question_mark, color: Colors.brown),
@@ -138,24 +73,31 @@ class HomeScreen extends StatelessWidget {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
-      
+
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return const Text('no articles');
                       }
-      
+
                       final articles = snapshot.data!;
-      
+
                       return Column(
                         children: List.generate(articles.length, (index) {
                           final article = articles[index];
-      
+
+                          final value =
+                              (article.slug != null && article.slug!.isNotEmpty)
+                              ? article.slug!
+                              : article.articleId;
+
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 15),
                             child: GestureDetector(
                               onTap: () {
                                 context.pushNamed(
                                   'article',
-                                  pathParameters: {'id': article.articleId},
+                                  pathParameters: {
+                                    'value': value,
+                                  }, // ✅ updated key
                                 );
                               },
                               child: QuestionsContainer(
@@ -197,23 +139,23 @@ class HomeScreen extends StatelessWidget {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
-      
+
                       if (snapshot.hasError) {
                         return const Text("Something went wrong");
                       }
-      
+
                       final devotions = snapshot.data ?? [];
-      
+
                       if (devotions.isEmpty) {
                         return const Text("No devotions available");
                       }
-      
+
                       return ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: devotions.length,
                         itemBuilder: (context, index) {
                           final devotion = devotions[index];
-      
+
                           return Padding(
                             padding: const EdgeInsets.only(right: 16),
                             child: SizedBox(
@@ -226,7 +168,7 @@ class HomeScreen extends StatelessWidget {
                                 episodeno: devotion.episodeNo.toString(),
                                 date: formatDate(devotion.episodeDate),
                                 audioUrl: devotion.episodeUrl ?? '',
-                                coverUrl: devotion.episodeCoverUrl ?? '', 
+                                coverUrl: devotion.episodeCoverUrl ?? '',
                                 slug: devotion.slug ?? '',
                               ),
                             ),
@@ -245,6 +187,3 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-
-
-

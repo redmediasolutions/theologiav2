@@ -5,6 +5,7 @@ class CollectionArticleViewModel {
   final String summary;
   final int order;
   final String? featuredImage;
+  final String? slug;
 
   CollectionArticleViewModel({
     required this.itemId,
@@ -13,5 +14,6 @@ class CollectionArticleViewModel {
     required this.summary,
     required this.order,
     this.featuredImage,
+    this.slug
   });
 }

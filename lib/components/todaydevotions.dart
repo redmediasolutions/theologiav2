@@ -11,6 +11,7 @@ class TodaysDevotionContainer extends StatelessWidget {
   final String subtitle;
   final String audioUrl;
   final String? imageUrl;
+  final String? slug;
 
   const TodaysDevotionContainer({
     super.key,
@@ -19,6 +20,7 @@ class TodaysDevotionContainer extends StatelessWidget {
     required this.subtitle,
     required this.audioUrl,
     this.imageUrl,
+    this.slug,
   });
 
   Future<void> _shareDevotion(BuildContext context) async {
@@ -31,6 +33,10 @@ class TodaysDevotionContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+     /// 🔥 RESOLVE VALUE (FIXED)
+    final value =
+        (slug != null && slug!.isNotEmpty) ? slug! : id;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(22),
@@ -174,7 +180,7 @@ Positioned(
                             miniPlayerDismissed.value = false;
 
                             /// Analytics
-                            AudioAnalyticsService.incrementAudioOpened(id);
+                            //AudioAnalyticsService.incrementAudioOpened(id);
 
                             /// Play audio
                             audioHandler.playMedia(
@@ -182,6 +188,11 @@ Positioned(
                               title: title,
                               url: audioUrl,
                               imageUrl: imageUrl,
+                            );
+
+                              context.pushNamed(
+                              'devotion',
+                              pathParameters: {'value': value},
                             );
                           },
 

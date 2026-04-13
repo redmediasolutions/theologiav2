@@ -7,7 +7,12 @@ import 'package:theologia_app_1/models/collectionarticleview.dart';
 import 'package:theologia_app_1/services/firestore.dart';
 
 class FeaturedArticlesHorizontal extends StatefulWidget {
-  const FeaturedArticlesHorizontal({super.key});
+  final String collectionId;
+
+  const FeaturedArticlesHorizontal({
+    super.key,
+    required this.collectionId,
+  });
 
   @override
   State<FeaturedArticlesHorizontal> createState() =>
@@ -21,12 +26,12 @@ class _FeaturedArticlesHorizontalState
   late Future<List<ArticlePreviewModel>> _future;
 
   @override
-  void initState() {
-    super.initState();
-    _future = _service.fetchArticlesForCollection(
-      "zdqLM4v4r9vlosO1alF5",
-    );
-  }
+void initState() {
+  super.initState();
+  _future = _service.newstreamArticlesForCollection(
+    widget.collectionId, // 🔥 dynamic
+  );
+}
 
   @override
   Widget build(BuildContext context) {

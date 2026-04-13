@@ -179,9 +179,9 @@ class DailyAudioCard extends StatelessWidget {
 
                 miniPlayerDismissed.value = false;
 
-                AudioAnalyticsService.incrementAudioOpened(
+                /*AudioAnalyticsService.incrementAudioOpened(
                   devotion.id,
-                );
+                );*/
 
                 audioHandler.playMedia(
                   id: devotion.id,

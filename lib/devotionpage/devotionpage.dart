@@ -129,7 +129,7 @@ class _DevotionpageState extends State<Devotionpage> {
           const SizedBox(height: 15),
 
           /// PAGINATED DEVOTIONS
-          ...devotions.map((devotion) {
+          ...devotions.skip(1).map((devotion) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: RecentDevotionCard(

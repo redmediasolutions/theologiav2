@@ -19,13 +19,17 @@ class ArticlePage extends StatefulWidget {
 }
 
 class _ArticlePageState extends State<ArticlePage> {
-  late Stream<Singlearticlemodel?> _articleStream;
-
   final ScrollController _scrollController = ScrollController();
 
   bool _openedTracked = false;
   bool _completedTracked = false;
-  String? _resolvedArticleId;
+  bool _sessionTracked = false;
+
+  String? _currentArticleId;
+
+  double _maxScrollDepth = 0.0;
+  DateTime? _startTime;
+
   bool _isFirestoreId(String value) {
     return value.length == 20 && !value.contains('-');
   }
@@ -33,30 +37,137 @@ class _ArticlePageState extends State<ArticlePage> {
   @override
   void initState() {
     super.initState();
-
-    final service = FirestoreService();
-
-    if (_isFirestoreId(widget.value)) {
-      debugPrint("🔵 Loading via ID");
-      _articleStream = service.getArticle(widget.value);
-    } else {
-      debugPrint("🟢 Loading via SLUG");
-      _articleStream = service.getArticleBySlug(widget.value);
-    }
-
     _scrollController.addListener(_onScroll);
   }
 
-  void _onScroll() {
-    if (_completedTracked) return;
+  /// 🔥 Ensure analytics doc exists
+  Future<void> _ensureAnalyticsDoc(String articleId) async {
+    final docRef = FirebaseFirestore.instance
+        .collection('ArticleAnalytics')
+        .doc(articleId);
 
+    final doc = await docRef.get();
+
+    if (!doc.exists) {
+      await docRef.set({
+        "openedCount": 0,
+        "completedCount": 0,
+        "totalReadTime": 0,
+        "maxScrollDepth": 0,
+        "readTimeBuckets": {
+          "0_10": 0,
+          "10_30": 0,
+          "30_60": 0,
+          "60_plus": 0,
+        },
+        "createdAt": FieldValue.serverTimestamp(),
+      });
+
+      debugPrint("🆕 Analytics doc created");
+    }
+  }
+
+  /// 🧠 Bucket helper
+  String _getReadTimeBucket(int seconds) {
+    if (seconds <= 10) return "0_10";
+    if (seconds <= 30) return "10_30";
+    if (seconds <= 60) return "30_60";
+    return "60_plus";
+  }
+
+  void _onScroll() {
     if (!_scrollController.hasClients) return;
 
     final position = _scrollController.position;
 
-    // Trigger when user reaches ~90% of content
-    if (position.pixels >= position.maxScrollExtent * 0.9) {
+    final maxExtent = position.maxScrollExtent;
+    if (maxExtent == 0) return;
+
+    final currentDepth =
+        (position.pixels / maxExtent).clamp(0.0, 1.0);
+
+    if (currentDepth > _maxScrollDepth) {
+      _maxScrollDepth = currentDepth;
+    }
+
+    if (!_completedTracked && currentDepth >= 0.9) {
       _trackCompleted();
+    }
+  }
+
+  Future<void> _trackOpened(String articleId) async {
+    if (_openedTracked) return;
+    _openedTracked = true;
+
+    try {
+      await _ensureAnalyticsDoc(articleId);
+
+      await FirebaseFirestore.instance
+          .collection('ArticleAnalytics')
+          .doc(articleId)
+          .set({
+        "openedCount": FieldValue.increment(1),
+        "lastOpenedAt": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      debugPrint("📊 Opened tracked");
+    } catch (e) {
+      debugPrint("🔥 Opened error: $e");
+    }
+  }
+
+  Future<void> _trackCompleted() async {
+    if (_completedTracked || _currentArticleId == null) return;
+    _completedTracked = true;
+
+    try {
+      await _ensureAnalyticsDoc(_currentArticleId!);
+
+      await FirebaseFirestore.instance
+          .collection('ArticleAnalytics')
+          .doc(_currentArticleId)
+          .set({
+        "completedCount": FieldValue.increment(1),
+        "lastCompletedAt": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      debugPrint("✅ Completed tracked");
+    } catch (e) {
+      debugPrint("🔥 Completed error: $e");
+    }
+  }
+
+  /// 🔥 Track session
+  Future<void> _trackReadSession() async {
+    if (_sessionTracked) return;
+    _sessionTracked = true;
+
+    if (_currentArticleId == null || _startTime == null) return;
+
+    final duration =
+        DateTime.now().difference(_startTime!).inSeconds;
+
+    if (duration < 2) return;
+
+    final bucket = _getReadTimeBucket(duration);
+
+    try {
+      await _ensureAnalyticsDoc(_currentArticleId!);
+
+      await FirebaseFirestore.instance
+          .collection('ArticleAnalytics')
+          .doc(_currentArticleId)
+          .set({
+        "totalReadTime": FieldValue.increment(duration),
+        "readTimeBuckets.$bucket": FieldValue.increment(1),
+        "maxScrollDepth": (_maxScrollDepth * 100).round(),
+        "lastReadAt": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      debugPrint("⏱️ Session tracked: $duration sec");
+      debugPrint("🧠 Bucket: $bucket");
+    } catch (e) {
+      debugPrint("🔥 Session error: $e");
     }
   }
 
@@ -67,202 +178,132 @@ class _ArticlePageState extends State<ArticlePage> {
 
     final url = "https://theologia.in/article/$slug";
 
-    final text = "${article.title}\n\nRead this on Theologia:\n$url";
-
-    await Share.share(text);
-  }
-
-  Future<void> _trackOpened() async {
-    if (_openedTracked || _resolvedArticleId == null) return;
-
-    _openedTracked = true;
-
-    try {
-      await FirebaseFirestore.instance
-          .collection('Articles')
-          .doc(_resolvedArticleId)
-          .set({
-            "analytics": {"openedCount": FieldValue.increment(1)},
-          }, SetOptions(merge: true));
-
-      debugPrint("📊 Opened count incremented");
-    } catch (e) {
-      debugPrint("🔥 Error updating openedCount: $e");
-    }
-  }
-
-  Future<void> _trackCompleted() async {
-    if (_completedTracked || _resolvedArticleId == null) return;
-
-    _completedTracked = true;
-
-    try {
-      await FirebaseFirestore.instance
-          .collection('Articles')
-          .doc(_resolvedArticleId)
-          .set({
-            "analytics": {"completedCount": FieldValue.increment(1)},
-          }, SetOptions(merge: true));
-
-      debugPrint("✅ Completed count incremented");
-    } catch (e) {
-      debugPrint("🔥 Error updating completedCount: $e");
-    }
+    await Share.share(
+      "${article.title}\n\nRead this on Theologia:\n$url",
+    );
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll); // ✅ FIRST
-    _scrollController.dispose(); // ✅ THEN dispose
-
-    debugPrint("🧹 ArticlePage disposed for: ${_resolvedArticleId}");
+    _trackReadSession();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  Future<bool> _handleBack() async {
-    debugPrint("⬅️ Back pressed on ArticlePage");
-    return true; // allow navigation
   }
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("🔄 ArticlePage build()");
+    final service = FirestoreService();
 
-    return WillPopScope(
-      onWillPop: _handleBack,
+    final stream = _isFirestoreId(widget.value)
+        ? service.getArticle(widget.value)
+        : service.getArticleBySlug(widget.value);
+
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+
+        _trackReadSession();
+
+        if (Navigator.canPop(context)) {
+          context.pop();
+        } else {
+          context.go('/');
+        }
+      },
       child: Scaffold(
         body: StreamBuilder<Singlearticlemodel?>(
-          stream: _articleStream,
+          stream: stream,
           builder: (context, snapshot) {
-            debugPrint("📡 StreamBuilder state: ${snapshot.connectionState}");
-
-            if (snapshot.connectionState == ConnectionState.waiting) {
+            if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (!snapshot.hasData || snapshot.data == null) {
-              return const Center(child: Text("Article not found"));
-            }
-
             final article = snapshot.data!;
-            _resolvedArticleId = article.id;
 
-            // 🔥 Redirect if opened via slug
+            /// 🔥 Reset on article change
+            if (_currentArticleId != article.id) {
+              _currentArticleId = article.id;
 
-            if (!_openedTracked) {
-              _openedTracked = true;
+              _openedTracked = false;
+              _completedTracked = false;
+              _sessionTracked = false;
+              _maxScrollDepth = 0.0;
 
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) {
-                  _trackOpened();
-                }
+              _startTime = DateTime.now();
+
+              Future.delayed(const Duration(milliseconds: 300), () {
+                if (mounted) _trackOpened(article.id);
               });
             }
 
-            int orderedCounter = 0;
             final blocks = article.normalizedBlocks ?? [];
-
             final isDark = Theme.of(context).brightness == Brightness.dark;
 
-            return CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                /// Sliver App Bar
-                SliverAppBar(
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      if (Navigator.canPop(context)) {
+            return SafeArea(
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  SliverAppBar(
+                    leading: IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () {
+                        _trackReadSession();
                         context.pop();
-                      } else {
-                        context.go('/'); // fallback to home
-                      }
-                    },
-                  ),
-                  pinned: false,
-                  expandedHeight: 80,
-                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  systemOverlayStyle: isDark
-                      ? SystemUiOverlayStyle.light
-                      : SystemUiOverlayStyle.dark,
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.share_outlined),
-                      onPressed: () => _shareArticle(article),
+                      },
                     ),
-                    IconButton(
-                      icon: Icon(
-                        isDark
-                            ? Icons.light_mode_outlined
-                            : Icons.dark_mode_outlined,
+                    expandedHeight: 80,
+                    backgroundColor:
+                        Theme.of(context).scaffoldBackgroundColor,
+                    systemOverlayStyle: isDark
+                        ? SystemUiOverlayStyle.light
+                        : SystemUiOverlayStyle.dark,
+                    actions: [
+                      IconButton(
+                        icon: const Icon(Icons.share_outlined),
+                        onPressed: () => _shareArticle(article),
                       ),
-                      onPressed: ThemeController.toggleTheme,
-                    ),
-                  ],
-                  /*
-                  flexibleSpace: FlexibleSpaceBar(
-                    titlePadding:
-                        const EdgeInsetsDirectional.only(start: 16, bottom: 16,),
-                    title: Text(
-                      article.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),*/
-                ),
+                      IconButton(
+                        icon: Icon(
+                          isDark
+                              ? Icons.light_mode_outlined
+                              : Icons.dark_mode_outlined,
+                        ),
+                        onPressed: ThemeController.toggleTheme,
+                      ),
+                    ],
+                  ),
 
-                /// Article Content
-                SliverPadding(
-                  padding: const EdgeInsets.all(20),
-                  sliver: SliverToBoxAdapter(
-                    child: SelectionArea(
+                  SliverPadding(
+                    padding: const EdgeInsets.all(20),
+                    sliver: SliverToBoxAdapter(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          /// Title
                           Text(
                             article.title,
-                            style: Theme.of(context).textTheme.headlineLarge,
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineLarge,
                           ),
 
-                          /// Excerpt
                           if (article.excerpt.isNotEmpty) ...[
                             const SizedBox(height: 10),
-                            Text(
-                              article.excerpt,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
+                            Text(article.excerpt),
                           ],
 
                           if (article.featuredImage != null &&
                               article.featuredImage!.isNotEmpty) ...[
                             const SizedBox(height: 20),
-
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
                               child: SizedBox(
-                                height: 300, // 🔥 IMPORTANT: constrain height
+                                height: 450,
                                 width: double.infinity,
                                 child: CachedNetworkImage(
                                   imageUrl: article.featuredImage!,
-                                  fit: BoxFit.fill,
-
-                                  // 🔥 Prevent large memory usage
-                                  memCacheWidth: 800,
-                                  memCacheHeight: 400,
-
-                                  placeholder: (context, url) => Container(
-                                    color: Colors.grey[300],
-                                    child: const Center(
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  ),
-
-                                  errorWidget: (context, url, error) =>
-                                      const Center(
-                                        child: Icon(Icons.image, size: 40),
-                                      ),
+                                  fit: BoxFit.cover,
                                 ),
                               ),
                             ),
@@ -272,23 +313,10 @@ class _ArticlePageState extends State<ArticlePage> {
                           const Divider(),
                           const SizedBox(height: 20),
 
-                          /// Blocks
-                          ...blocks.map<Widget>((block) {
-                            final map = Map<String, dynamic>.from(block);
-
-                            if (map['type'] == 'list_item' &&
-                                map['ordered'] == true) {
-                              final widget = ArticleBlockRenderer(
-                                block: map,
-                                listIndex: orderedCounter,
-                              );
-
-                              orderedCounter++;
-                              return widget;
-                            } else {
-                              orderedCounter = 0;
-                              return ArticleBlockRenderer(block: map);
-                            }
+                          ...blocks.map((block) {
+                            return ArticleBlockRenderer(
+                              block: Map<String, dynamic>.from(block),
+                            );
                           }),
 
                           const SizedBox(height: 60),
@@ -296,8 +324,8 @@ class _ArticlePageState extends State<ArticlePage> {
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             );
           },
         ),
